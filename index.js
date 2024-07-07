@@ -96,6 +96,15 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const canvasSize = 800;
+    const encoder = new GIFEncoder(canvasSize, canvasSize);
+    res.setHeader('Content-Type', 'image/gif');
+    encoder.createReadStream().pipe(res);
+
+    encoder.start();
+    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
+    encoder.setDelay(50); // frame delay in ms
+    encoder.setQuality(10); // image quality. 10 is default.
+
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
@@ -125,14 +134,6 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     // Create animated gradient text
-    const encoder = new GIFEncoder(canvasSize, canvasSize);
-    res.setHeader('Content-Type', 'image/gif');
-    encoder.createReadStream().pipe(res);
-    encoder.start();
-    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
-    encoder.setDelay(50); // frame delay in ms
-    encoder.setQuality(10); // image quality. 10 is default.
-
     for (let i = 0; i < 100; i++) {
         drawText(i);
         encoder.addFrame(ctx);
@@ -144,4 +145,4 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-                     
+            
