@@ -89,57 +89,15 @@ app.get('/text-to-picture', (req, res) => {
     }
 });
 
-app.get('/animated-text-to-picture', (req, res) => {
+    app.get('/animated-text-to-picture', (req, res) => {
     const { text } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
 
     const canvasSize = 800;
-    const padding = 20;
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
-
-    // Function to split text into multiple lines
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-        const words = text.split(' ');
-        let line = '';
-        let lines = [];
-        for (let n = 0; n < words.length; n++) {
-            let testLine = line + words[n] + ' ';
-            let metrics = context.measureText(testLine);
-            let testWidth = metrics.width;
-            if (testWidth > maxWidth && n > 0) {
-                lines.push(line);
-                line = words[n] + ' ';
-            } else {
-                line = testLine;
-            }
-        }
-        lines.push(line);
-
-        for (let i = 0; i < lines.length; i++) {
-            context.fillText(lines[i], x, y);
-            y += lineHeight;
-        }
-    }
-
-    // Determine the maximum font size that fits the canvas width and height
-    let fontSize = 300; // Start with a larger font size
-    ctx.font = `${fontSize}px "Roboto"`;
-    let textWidth = ctx.measureText(text).width;
-    let lineHeight = fontSize * 1.2;
-    let textHeight = lineHeight;
-
-    while ((textWidth > canvasSize - 2 * padding || textHeight > canvasSize - 2 * padding) && fontSize > 10) {
-        fontSize--;
-        ctx.font = `${fontSize}px "Roboto"`;
-        textWidth = ctx.measureText(text).width;
-        lineHeight = fontSize * 1.2;
-        textHeight = lineHeight * Math.ceil(textWidth / (canvasSize - 2 * padding));
-    }
-
-    const maxTextWidth = canvasSize - 2 * padding;
 
     // Function to draw text with gradient
     function drawText(frame) {
@@ -159,11 +117,9 @@ app.get('/animated-text-to-picture', (req, res) => {
         ctx.fillStyle = gradient;
         ctx.globalCompositeOperation = 'source-in';
 
-        if (textWidth <= maxTextWidth) {
-            ctx.fillText(text, canvasSize / 2, canvasSize / 2);
-        } else {
-            wrapText(ctx, text, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
-        }
+        ctx.font = 'bold 70pt Menlo';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
         ctx.globalCompositeOperation = 'source-over';
     }
@@ -177,13 +133,14 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.setDelay(50); // frame delay in ms
     encoder.setQuality(10); // image quality. 10 is default.
 
-    for (let i = 0; i < 100; i++) { // number of frames
+    for (let i = 0; i < 20; i++) { // reduce number of frames
         drawText(i);
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
 });
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
