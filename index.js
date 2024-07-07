@@ -134,7 +134,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     // Create animated gradient text
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 20; i++) { // Reduced number of frames
         drawText(i);
         encoder.addFrame(ctx);
     }
@@ -145,4 +145,4 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-            
+           
