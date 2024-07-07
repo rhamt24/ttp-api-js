@@ -102,40 +102,28 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     encoder.start();
     encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
-    encoder.setDelay(50); // frame delay in ms
+    encoder.setDelay(500); // frame delay in ms
     encoder.setQuality(10); // image quality. 10 is default.
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Function to draw text with gradient
-    function drawText(frame) {
+    // Function to draw text
+    function drawText(color) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Create gradient
-        const gradient = ctx.createLinearGradient(
-            canvasSize - frame * (canvasSize / 100), 0,
-            canvasSize + frame * (canvasSize / 100), 0
-        );
-        gradient.addColorStop(0, '#ff00ff'); // pink
-        gradient.addColorStop(0.5, '#0000ff'); // blue
-        gradient.addColorStop(1, '#ff00ff'); // pink
-
-        ctx.fillStyle = gradient;
-        ctx.globalCompositeOperation = 'source-in';
-
+        ctx.fillStyle = color;
         ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
         ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-
-        ctx.globalCompositeOperation = 'source-over';
     }
 
-    // Create animated gradient text
-    for (let i = 0; i < 20; i++) { // Reduced number of frames
-        drawText(i);
+    const colors = ['#ff0000', '#00ff00', '#0000ff']; // red, green, blue
+
+    for (let i = 0; i < colors.length; i++) {
+        drawText(colors[i]);
         encoder.addFrame(ctx);
     }
 
@@ -145,4 +133,4 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-           
+            
