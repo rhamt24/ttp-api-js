@@ -15,6 +15,7 @@ app.get('/text-to-picture', (req, res) => {
     }
 
     const canvasSize = 800;
+    const padding = 20;
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
@@ -55,14 +56,21 @@ app.get('/text-to-picture', (req, res) => {
     let fontSize = 150;
     ctx.font = `${fontSize}px "Roboto"`;
     let textWidth = ctx.measureText(text).width;
-    while (textWidth > canvasSize - 20 && fontSize > 10) { // Subtract 20 for padding
+    while (textWidth > canvasSize - 2 * padding && fontSize > 10) { // Subtract padding
         fontSize--;
         ctx.font = `${fontSize}px "Roboto"`;
         textWidth = ctx.measureText(text).width;
     }
 
     const lineHeight = fontSize * 1.2;
-    wrapText(ctx, text, canvasSize / 2, canvasSize / 2 - (lineHeight * (text.split(' ').length - 1) / 2), canvasSize - 20, lineHeight);
+    const maxTextWidth = canvasSize - 2 * padding;
+
+    // Check if the text fits in one line
+    if (textWidth <= maxTextWidth) {
+        ctx.fillText(text, canvasSize / 2, canvasSize / 2);
+    } else {
+        wrapText(ctx, text, canvasSize / 2, canvasSize / 2 - (lineHeight * (text.split(' ').length - 1) / 2), maxTextWidth, lineHeight);
+    }
 
     // Convert canvas to image
     if (format === 'jpg' || format === 'jpeg') {
@@ -79,3 +87,4 @@ app.get('/text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+        
