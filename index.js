@@ -89,7 +89,7 @@ app.get('/text-to-picture', (req, res) => {
     }
 });
 
-    app.get('/animated-text-to-picture', (req, res) => {
+app.get('/animated-text-to-picture', (req, res) => {
     const { text } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
@@ -117,7 +117,7 @@ app.get('/text-to-picture', (req, res) => {
         ctx.fillStyle = gradient;
         ctx.globalCompositeOperation = 'source-in';
 
-        ctx.font = 'bold 70pt Menlo';
+        ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
         ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
@@ -133,7 +133,7 @@ app.get('/text-to-picture', (req, res) => {
     encoder.setDelay(50); // frame delay in ms
     encoder.setQuality(10); // image quality. 10 is default.
 
-    for (let i = 0; i < 20; i++) { // reduce number of frames
+    for (let i = 0; i < 100; i++) {
         drawText(i);
         encoder.addFrame(ctx);
     }
@@ -141,8 +141,7 @@ app.get('/text-to-picture', (req, res) => {
     encoder.finish();
 });
 
-
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-                 
+                     
