@@ -24,10 +24,45 @@ app.get('/text-to-picture', (req, res) => {
 
     // Text styling
     ctx.fillStyle = '#000000';
-    ctx.font = '150px "Roboto"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, canvasSize / 2, canvasSize / 2);
+
+    // Function to split text into multiple lines
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        let lines = [];
+        for (let n = 0; n < words.length; n++) {
+            let testLine = line + words[n] + ' ';
+            let metrics = context.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line);
+                line = words[n] + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        lines.push(line);
+
+        for (let i = 0; i < lines.length; i++) {
+            context.fillText(lines[i], x, y);
+            y += lineHeight;
+        }
+    }
+
+    // Determine the maximum font size that fits the canvas width
+    let fontSize = 150;
+    ctx.font = `${fontSize}px "Roboto"`;
+    let textWidth = ctx.measureText(text).width;
+    while (textWidth > canvasSize - 20 && fontSize > 10) { // Subtract 20 for padding
+        fontSize--;
+        ctx.font = `${fontSize}px "Roboto"`;
+        textWidth = ctx.measureText(text).width;
+    }
+
+    const lineHeight = fontSize * 1.2;
+    wrapText(ctx, text, canvasSize / 2, canvasSize / 2 - (lineHeight * (text.split(' ').length - 1) / 2), canvasSize - 20, lineHeight);
 
     // Convert canvas to image
     if (format === 'jpg' || format === 'jpeg') {
