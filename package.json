@@ -1,0 +1,16 @@
+{
+  "name": "text-to-picture-api",
+  "version": "1.0.0",
+  "description": "A REST API to convert text to picture using Node.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^2.8.0",
+    "express": "^4.18.2"
+  }
+}
