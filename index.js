@@ -1,8 +1,12 @@
 const express = require('express');
-const { createCanvas } = require('canvas');
+const { createCanvas, registerFont } = require('canvas');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Register the font
+registerFont(path.join(__dirname, 'fonts', 'Roboto-Regular.ttf'), { family: 'Roboto' });
 
 app.get('/text-to-picture', (req, res) => {
     const { text, format = 'png' } = req.query;
@@ -10,7 +14,8 @@ app.get('/text-to-picture', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvas = createCanvas(800, 200);
+    const canvasSize = 800;
+    const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
     // Background
@@ -19,8 +24,10 @@ app.get('/text-to-picture', (req, res) => {
 
     // Text styling
     ctx.fillStyle = '#000000';
-    ctx.font = '48px sans-serif';
-    ctx.fillText(text, 50, 100);
+    ctx.font = '48px "Roboto"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, canvasSize / 2, canvasSize / 2);
 
     // Convert canvas to image
     if (format === 'jpg' || format === 'jpeg') {
