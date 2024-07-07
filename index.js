@@ -24,7 +24,7 @@ app.get('/text-to-picture', (req, res) => {
 
     // Text styling
     ctx.fillStyle = '#000000';
-    ctx.font = '48px "Roboto"';
+    ctx.font = '150px "Roboto"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, canvasSize / 2, canvasSize / 2);
