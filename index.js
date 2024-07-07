@@ -52,24 +52,28 @@ app.get('/text-to-picture', (req, res) => {
         }
     }
 
-    // Determine the maximum font size that fits the canvas width
-    let fontSize = 150;
+    // Determine the maximum font size that fits the canvas width and height
+    let fontSize = 300; // Start with a larger font size
     ctx.font = `${fontSize}px "Roboto"`;
     let textWidth = ctx.measureText(text).width;
-    while (textWidth > canvasSize - 2 * padding && fontSize > 10) { // Subtract padding
+    let lineHeight = fontSize * 1.2;
+    let textHeight = lineHeight;
+
+    while ((textWidth > canvasSize - 2 * padding || textHeight > canvasSize - 2 * padding) && fontSize > 10) {
         fontSize--;
         ctx.font = `${fontSize}px "Roboto"`;
         textWidth = ctx.measureText(text).width;
+        lineHeight = fontSize * 1.2;
+        textHeight = lineHeight * Math.ceil(textWidth / (canvasSize - 2 * padding));
     }
 
-    const lineHeight = fontSize * 1.2;
     const maxTextWidth = canvasSize - 2 * padding;
 
     // Check if the text fits in one line
     if (textWidth <= maxTextWidth) {
         ctx.fillText(text, canvasSize / 2, canvasSize / 2);
     } else {
-        wrapText(ctx, text, canvasSize / 2, canvasSize / 2 - (lineHeight * (text.split(' ').length - 1) / 2), maxTextWidth, lineHeight);
+        wrapText(ctx, text, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
     }
 
     // Convert canvas to image
