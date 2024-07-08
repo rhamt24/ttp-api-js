@@ -1,7 +1,9 @@
 const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
-const GIFEncoder = require('gifencoder');
+const fs = require('fs');
+const { exec } = require('child_process');
+const { cwebp } = require('webp-converter');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -92,47 +94,70 @@ app.get('/text-to-picture', (req, res) => {
     }
 });
 
-app.get('/animated-text-to-picture', (req, res) => {
+app.get('/animated-text-to-webp', async (req, res) => {
     const { text } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
 
     const canvasSize = 800;
-    const encoder = new GIFEncoder(canvasSize, canvasSize);
-    res.setHeader('Content-Type', 'image/gif');
-    encoder.createReadStream().pipe(res);
-
-    encoder.start();
-    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
-    encoder.setDelay(500); // frame delay in ms
-    encoder.setQuality(10); // image quality. 10 is default.
-
+    const frameCount = 30; // Number of frames
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
     // Function to draw text
     function drawText(color) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Black outline
         ctx.lineWidth = 4;
         ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
-
         ctx.strokeText(text, canvas.width / 2, canvas.height / 2); // Draw outline
         ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
     }
 
+    // Colors to cycle through
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
-    for (let i = 0; i < colors.length; i++) {
-        drawText(colors[i]);
-        encoder.addFrame(ctx);
+    // Create frames
+    const frameFiles = [];
+    for (let i = 0; i < frameCount; i++) {
+        drawText(colors[i % colors.length]);
+        const framePath = path.join(__dirname, `frame-${i}.png`);
+        frameFiles.push(framePath);
+        fs.writeFileSync(framePath, canvas.toBuffer('image/png'));
     }
 
-    encoder.finish();
+    const webpFilePath = path.join(__dirname, 'animated-text.webp');
+
+    // Convert frames to animated WebP
+    const generateWebP = async (inputFiles, outputFile) => {
+        const options = `-q 80 -d 100`; // Quality and delay
+        return new Promise((resolve, reject) => {
+            cwebp(inputFiles.join(' '), outputFile, options, (status, error) => {
+                if (status === '100') {
+                    resolve(outputFile);
+                } else {
+                    reject(error);
+                }
+            });
+        });
+    };
+
+    generateWebP(frameFiles, webpFilePath)
+        .then(() => {
+            res.setHeader('Content-Type', 'image/webp');
+            res.sendFile(webpFilePath, () => {
+                // Cleanup temporary frame files
+                frameFiles.forEach(file => fs.unlinkSync(file));
+                fs.unlinkSync(webpFilePath);
+            });
+        })
+        .catch(error => {
+            console.error(`Error converting to WebP: ${error}`);
+            return res.status(500).json({ error: 'Error creating WebP animation' });
+        });
 });
 
 app.listen(PORT, () => {
