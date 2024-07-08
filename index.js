@@ -125,7 +125,7 @@ app.get('/animated-text-to-picture', (req, res) => {
         ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
     }
 
-    const colors = ['#FFFFFF']; // White text with black outline
+    const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
     for (let i = 0; i < colors.length; i++) {
         drawText(colors[i]);
