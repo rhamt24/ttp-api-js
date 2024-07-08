@@ -20,12 +20,13 @@ app.get('/text-to-picture', (req, res) => {
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Background
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Background (transparent)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Text styling
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#FFFFFF'; // White text
+    ctx.strokeStyle = '#000000'; // Black outline
+    ctx.lineWidth = 4;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -48,7 +49,8 @@ app.get('/text-to-picture', (req, res) => {
         lines.push(line);
 
         for (let i = 0; i < lines.length; i++) {
-            context.fillText(lines[i], x, y);
+            context.strokeText(lines[i], x, y); // Draw outline
+            context.fillText(lines[i], x, y); // Draw text
             y += lineHeight;
         }
     }
@@ -72,7 +74,8 @@ app.get('/text-to-picture', (req, res) => {
 
     // Check if the text fits in one line
     if (textWidth <= maxTextWidth) {
-        ctx.fillText(text, canvasSize / 2, canvasSize / 2);
+        ctx.strokeText(text, canvasSize / 2, canvasSize / 2); // Draw outline
+        ctx.fillText(text, canvasSize / 2, canvasSize / 2); // Draw text
     } else {
         wrapText(ctx, text, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
     }
@@ -111,16 +114,18 @@ app.get('/animated-text-to-picture', (req, res) => {
     // Function to draw text
     function drawText(color) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = color;
+        ctx.strokeStyle = '#000000'; // Black outline
+        ctx.lineWidth = 4;
         ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        ctx.strokeText(text, canvas.width / 2, canvas.height / 2); // Draw outline
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
     }
 
-    const colors = ['#ff0000', '#00ff00', '#0000ff']; // red, green, blue
+    const colors = ['#FFFFFF']; // White text with black outline
 
     for (let i = 0; i < colors.length; i++) {
         drawText(colors[i]);
@@ -133,4 +138,3 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-            
