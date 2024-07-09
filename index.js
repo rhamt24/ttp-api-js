@@ -2,21 +2,12 @@ const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
 const GIFEncoder = require('gifencoder');
-const multer = require('multer');
-const fs = require('fs');
-const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-
 // Register the font
 registerFont(path.join(__dirname, 'fonts', 'Roboto-Regular.ttf'), { family: 'Roboto' });
-
-// Set up multer for temporary file storage
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 app.get('/text-to-picture', (req, res) => {
     const { text, format = 'png' } = req.query;
@@ -107,10 +98,15 @@ app.get('/animated-text-to-picture', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    console.log('Text:', text); // Debugging
-
     const canvasSize = 800;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
+    res.setHeader('Content-Type', 'image/gif');
+    encoder.createReadStream().pipe(res);
+
+    encoder.start();
+    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
+    encoder.setDelay(500); // frame delay in ms
+    encoder.setQuality(10); // image quality. 10 is default.
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -124,7 +120,6 @@ app.get('/animated-text-to-picture', (req, res) => {
         ctx.lineWidth = 4;
         ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
 
         ctx.strokeText(text, canvas.width / 2, canvas.height / 2); // Draw outline
         ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
@@ -132,45 +127,12 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
-    encoder.start();
-    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
-    encoder.setDelay(500); // frame delay in ms
-    encoder.setQuality(10); // image quality. 10 is default.
-
     for (let i = 0; i < colors.length; i++) {
         drawText(colors[i]);
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
-
-    const gifBuffer = encoder.out.getData();
-
-    // Save the GIF buffer to a temporary file
-    const tempFilePath = path.join(__dirname, 'temp', `${Date.now()}.gif`);
-    fs.writeFileSync(tempFilePath, gifBuffer);
-
-    // Return the URL for the temporary file
-    const fileUrl = `${req.protocol}://${req.get('host')}/download/${path.basename(tempFilePath)}`;
-    console.log('File URL:', fileUrl); // Debugging
-    res.json({ url: fileUrl });
-});
-
-// Endpoint to serve the temporary file
-app.get('/download/:filename', (req, res) => {
-    const filePath = path.join(__dirname, 'temp', req.params.filename);
-    res.download(filePath, (err) => {
-        if (err) {
-            console.error('Error downloading file:', err);
-        } else {
-            // Delete the file after it has been downloaded
-            fs.unlink(filePath, (err) => {
-                if (err) {
-                    console.error('Error deleting file:', err);
-                }
-            });
-        }
-    });
 });
 
 app.listen(PORT, () => {
