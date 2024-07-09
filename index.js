@@ -152,6 +152,31 @@ app.get('/animated-text-to-picture', (req, res) => {
         }
     }
 
+    // Function to split text into multiple lines
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+        const words = text.split(' ');
+        let line = '';
+        let lines = [];
+        for (let n = 0; n < words.length; n++) {
+            let testLine = line + words[n] + ' ';
+            let metrics = context.measureText(testLine);
+            let testWidth = metrics.width;
+            if (testWidth > maxWidth && n > 0) {
+                lines.push(line);
+                line = words[n] + ' ';
+            } else {
+                line = testLine;
+            }
+        }
+        lines.push(line);
+
+        for (let i = 0; i < lines.length; i++) {
+            context.strokeText(lines[i], x, y); // Draw outline
+            context.fillText(lines[i], x, y); // Draw text
+            y += lineHeight;
+        }
+    }
+
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
     for (let i = 0; i < colors.length; i++) {
@@ -165,4 +190,4 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-        
+            
