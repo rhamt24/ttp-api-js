@@ -4,9 +4,12 @@ const path = require('path');
 const GIFEncoder = require('gifencoder');
 const multer = require('multer');
 const fs = require('fs');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(cors());
 
 // Register the font
 registerFont(path.join(__dirname, 'fonts', 'Roboto-Regular.ttf'), { family: 'Roboto' });
@@ -104,6 +107,8 @@ app.get('/animated-text-to-picture', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
+    console.log('Text:', text); // Debugging
+
     const canvasSize = 800;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
@@ -147,6 +152,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     // Return the URL for the temporary file
     const fileUrl = `${req.protocol}://${req.get('host')}/download/${path.basename(tempFilePath)}`;
+    console.log('File URL:', fileUrl); // Debugging
     res.json({ url: fileUrl });
 });
 
