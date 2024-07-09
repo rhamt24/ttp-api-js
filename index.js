@@ -2,6 +2,7 @@ const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
 const GIFEncoder = require('gifencoder');
+const stream = require('stream');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -100,13 +101,6 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     const canvasSize = 800;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
-    res.setHeader('Content-Type', 'image/gif');
-    encoder.createReadStream().pipe(res);
-
-    encoder.start();
-    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
-    encoder.setDelay(500); // frame delay in ms
-    encoder.setQuality(10); // image quality. 10 is default.
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -120,6 +114,7 @@ app.get('/animated-text-to-picture', (req, res) => {
         ctx.lineWidth = 4;
         ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
         ctx.strokeText(text, canvas.width / 2, canvas.height / 2); // Draw outline
         ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
@@ -127,12 +122,26 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
+    const buffers = [];
+
+    encoder.start();
+    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
+    encoder.setDelay(500); // frame delay in ms
+    encoder.setQuality(10); // image quality. 10 is default.
+
     for (let i = 0; i < colors.length; i++) {
         drawText(colors[i]);
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
+
+    const gifBuffer = encoder.out.getData();
+
+    res.status(200).set({
+        'Content-Type': 'image/gif',
+        'Content-Length': gifBuffer.length
+    }).send(gifBuffer);
 });
 
 app.listen(PORT, () => {
