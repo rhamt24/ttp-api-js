@@ -116,6 +116,9 @@ app.get('/animated-text-to-picture', (req, res) => {
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
+    // Ensure background is transparent
+    encoder.setTransparent(0x000000);
+
     // Function to draw text
     function drawText(color) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -190,4 +193,4 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-    
+        
