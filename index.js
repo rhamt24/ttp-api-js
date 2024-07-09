@@ -125,32 +125,31 @@ app.get('/animated-text-to-picture', async (req, res) => {
         frames.push(canvas.toBuffer('image/png'));
     }
 
-    const webpFilePath = path.join(__dirname, 'animated-text.webp');
-
-    // Convert frames to animated WebP
-    const generateWebP = async (frames, outputFile) => {
+    // Convert frames to animated WebP in memory
+    const generateWebP = async (frames) => {
         const options = `-q 80 -d 100`; // Quality and delay
-        return new Promise((resolve, reject) => {
-            cwebp(frames, outputFile, options, (status, error) => {
-                if (status === '100') {
-                    resolve(outputFile);
-                } else {
-                    reject(error);
-                }
+        const webpBuffers = [];
+        for (const frame of frames) {
+            const webpBuffer = await new Promise((resolve, reject) => {
+                cwebp(frame, "-o", options, (status, error, result) => {
+                    if (status === '100') {
+                        resolve(result);
+                    } else {
+                        reject(error);
+                    }
+                });
             });
-        });
+            webpBuffers.push(webpBuffer);
+        }
+        return Buffer.concat(webpBuffers);
     };
 
-    generateWebP(frames, webpFilePath)
-        .then(() => {
-            console.log('WebP generation successful:', webpFilePath);
+    generateWebP(frames)
+        .then((webpBuffer) => {
             res.setHeader('Content-Type', 'image/webp');
-            res.sendFile(webpFilePath, () => {
-                // Cleanup temporary frame files
-                fs.unlinkSync(webpFilePath);
-            });
+            res.send(webpBuffer);
         })
-        .catch(error => {
+        .catch((error) => {
             console.error(`Error converting to WebP: ${error}`);
             return res.status(500).json({ error: 'Error creating WebP animation' });
         });
