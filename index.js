@@ -2,7 +2,6 @@ const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
 const { cwebp } = require('webp-converter');
 
 const app = express();
@@ -147,6 +146,7 @@ app.get('/animated-text-to-picture', async (req, res) => {
 
     generateWebP(frameFiles, webpFilePath)
         .then(() => {
+            console.log('WebP generation successful:', webpFilePath);
             res.setHeader('Content-Type', 'image/webp');
             res.sendFile(webpFilePath, () => {
                 // Cleanup temporary frame files
