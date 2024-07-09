@@ -7,13 +7,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Register the font
-registerFont(path.join(__dirname, 'fonts', 'Roboto-Regular.ttf'), { family: 'Roboto' });
+registerFont(path.join(__dirname, 'fonts', 'Montserrat-Bold.ttf'), { family: 'Montserrat' });
 
 app.get('/text-to-picture', (req, res) => {
     const { text, format = 'png' } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
+
+    const upperText = text.toUpperCase();
 
     const canvasSize = 800;
     const padding = 20;
@@ -57,15 +59,15 @@ app.get('/text-to-picture', (req, res) => {
 
     // Determine the maximum font size that fits the canvas width and height
     let fontSize = 300; // Start with a larger font size
-    ctx.font = `${fontSize}px "Roboto"`;
-    let textWidth = ctx.measureText(text).width;
+    ctx.font = `${fontSize}px "Montserrat"`;
+    let textWidth = ctx.measureText(upperText).width;
     let lineHeight = fontSize * 1.2;
     let textHeight = lineHeight;
 
     while ((textWidth > canvasSize - 2 * padding || textHeight > canvasSize - 2 * padding) && fontSize > 10) {
         fontSize--;
-        ctx.font = `${fontSize}px "Roboto"`;
-        textWidth = ctx.measureText(text).width;
+        ctx.font = `${fontSize}px "Montserrat"`;
+        textWidth = ctx.measureText(upperText).width;
         lineHeight = fontSize * 1.2;
         textHeight = lineHeight * Math.ceil(textWidth / (canvasSize - 2 * padding));
     }
@@ -74,10 +76,10 @@ app.get('/text-to-picture', (req, res) => {
 
     // Check if the text fits in one line
     if (textWidth <= maxTextWidth) {
-        ctx.strokeText(text, canvasSize / 2, canvasSize / 2); // Draw outline
-        ctx.fillText(text, canvasSize / 2, canvasSize / 2); // Draw text
+        ctx.strokeText(upperText, canvasSize / 2, canvasSize / 2); // Draw outline
+        ctx.fillText(upperText, canvasSize / 2, canvasSize / 2); // Draw text
     } else {
-        wrapText(ctx, text, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
+        wrapText(ctx, upperText, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
     }
 
     // Convert canvas to image
@@ -98,7 +100,10 @@ app.get('/animated-text-to-picture', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
+    const upperText = text.toUpperCase();
+
     const canvasSize = 800;
+    const padding = 20;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
@@ -118,11 +123,33 @@ app.get('/animated-text-to-picture', (req, res) => {
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Black outline
         ctx.lineWidth = 4;
-        ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-        ctx.strokeText(text, canvas.width / 2, canvas.height / 2); // Draw outline
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
+        // Determine the maximum font size that fits the canvas width and height
+        let fontSize = 300; // Start with a larger font size
+        ctx.font = `${fontSize}px "Montserrat"`;
+        let textWidth = ctx.measureText(upperText).width;
+        let lineHeight = fontSize * 1.2;
+        let textHeight = lineHeight;
+
+        while ((textWidth > canvasSize - 2 * padding || textHeight > canvasSize - 2 * padding) && fontSize > 10) {
+            fontSize--;
+            ctx.font = `${fontSize}px "Montserrat"`;
+            textWidth = ctx.measureText(upperText).width;
+            lineHeight = fontSize * 1.2;
+            textHeight = lineHeight * Math.ceil(textWidth / (canvasSize - 2 * padding));
+        }
+
+        const maxTextWidth = canvasSize - 2 * padding;
+
+        // Check if the text fits in one line
+        if (textWidth <= maxTextWidth) {
+            ctx.strokeText(upperText, canvasSize / 2, canvasSize / 2); // Draw outline
+            ctx.fillText(upperText, canvasSize / 2, canvasSize / 2); // Draw text
+        } else {
+            wrapText(ctx, upperText, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
+        }
     }
 
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
@@ -138,3 +165,4 @@ app.get('/animated-text-to-picture', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+        
