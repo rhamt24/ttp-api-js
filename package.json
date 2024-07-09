@@ -4,7 +4,8 @@
   "description": "A simple Express server that converts text to images and animated GIFs",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "npm install"
   },
   "dependencies": {
     "canvas": "^2.9.0",
