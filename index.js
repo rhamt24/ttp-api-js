@@ -2,13 +2,18 @@ const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
 const GIFEncoder = require('gifencoder');
-const stream = require('stream');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Register the font
 registerFont(path.join(__dirname, 'fonts', 'Roboto-Regular.ttf'), { family: 'Roboto' });
+
+// Set up multer for temporary file storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 app.get('/text-to-picture', (req, res) => {
     const { text, format = 'png' } = req.query;
@@ -122,8 +127,6 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
-    const buffers = [];
-
     encoder.start();
     encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
     encoder.setDelay(500); // frame delay in ms
@@ -138,13 +141,32 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     const gifBuffer = encoder.out.getData();
 
-    res.status(200).set({
-        'Content-Type': 'image/gif',
-        'Content-Length': gifBuffer.length
-    }).send(gifBuffer);
+    // Save the GIF buffer to a temporary file
+    const tempFilePath = path.join(__dirname, 'temp', `${Date.now()}.gif`);
+    fs.writeFileSync(tempFilePath, gifBuffer);
+
+    // Return the URL for the temporary file
+    const fileUrl = `${req.protocol}://${req.get('host')}/download/${path.basename(tempFilePath)}`;
+    res.json({ url: fileUrl });
+});
+
+// Endpoint to serve the temporary file
+app.get('/download/:filename', (req, res) => {
+    const filePath = path.join(__dirname, 'temp', req.params.filename);
+    res.download(filePath, (err) => {
+        if (err) {
+            console.error('Error downloading file:', err);
+        } else {
+            // Delete the file after it has been downloaded
+            fs.unlink(filePath, (err) => {
+                if (err) {
+                    console.error('Error deleting file:', err);
+                }
+            });
+        }
+    });
 });
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-            
