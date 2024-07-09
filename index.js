@@ -1,7 +1,6 @@
 const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
-const fs = require('fs');
 const { cwebp } = require('webp-converter');
 
 const app = express();
@@ -120,21 +119,19 @@ app.get('/animated-text-to-picture', async (req, res) => {
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
     // Create frames
-    const frameFiles = [];
+    const frames = [];
     for (let i = 0; i < frameCount; i++) {
         drawText(colors[i % colors.length]);
-        const framePath = path.join(__dirname, `frame-${i}.png`);
-        frameFiles.push(framePath);
-        fs.writeFileSync(framePath, canvas.toBuffer('image/png'));
+        frames.push(canvas.toBuffer('image/png'));
     }
 
     const webpFilePath = path.join(__dirname, 'animated-text.webp');
 
     // Convert frames to animated WebP
-    const generateWebP = async (inputFiles, outputFile) => {
+    const generateWebP = async (frames, outputFile) => {
         const options = `-q 80 -d 100`; // Quality and delay
         return new Promise((resolve, reject) => {
-            cwebp(inputFiles.join(' '), outputFile, options, (status, error) => {
+            cwebp(frames, outputFile, options, (status, error) => {
                 if (status === '100') {
                     resolve(outputFile);
                 } else {
@@ -144,13 +141,12 @@ app.get('/animated-text-to-picture', async (req, res) => {
         });
     };
 
-    generateWebP(frameFiles, webpFilePath)
+    generateWebP(frames, webpFilePath)
         .then(() => {
             console.log('WebP generation successful:', webpFilePath);
             res.setHeader('Content-Type', 'image/webp');
             res.sendFile(webpFilePath, () => {
                 // Cleanup temporary frame files
-                frameFiles.forEach(file => fs.unlinkSync(file));
                 fs.unlinkSync(webpFilePath);
             });
         })
