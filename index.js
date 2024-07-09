@@ -1,8 +1,7 @@
 const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
-const cwebp = require('cwebp-bin');
-const { execFile } = require('child_process');
+const GIFEncoder = require('gifencoder');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -93,68 +92,49 @@ app.get('/text-to-picture', (req, res) => {
     }
 });
 
-app.get('/animated-text-to-picture', async (req, res) => {
+app.get('/animated-text-to-picture', (req, res) => {
     const { text } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
 
     const canvasSize = 800;
-    const frameCount = 30; // Number of frames
+    const encoder = new GIFEncoder(canvasSize, canvasSize);
+    res.setHeader('Content-Type', 'image/gif');
+    encoder.createReadStream().pipe(res);
+
+    encoder.start();
+    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
+    encoder.setDelay(500); // frame delay in ms
+    encoder.setQuality(10); // image quality. 10 is default.
+
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
     // Function to draw text
     function drawText(color) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Black outline
         ctx.lineWidth = 4;
         ctx.font = 'bold 70pt Roboto';
         ctx.textAlign = 'center';
+
         ctx.strokeText(text, canvas.width / 2, canvas.height / 2); // Draw outline
         ctx.fillText(text, canvas.width / 2, canvas.height / 2); // Draw text
     }
 
-    // Colors to cycle through
     const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
 
-    // Create frames
-    const frames = [];
-    for (let i = 0; i < frameCount; i++) {
-        drawText(colors[i % colors.length]);
-        frames.push(canvas.toBuffer('image/png'));
+    for (let i = 0; i < colors.length; i++) {
+        drawText(colors[i]);
+        encoder.addFrame(ctx);
     }
 
-    // Convert frames to animated WebP in memory
-    const generateWebP = async (frames) => {
-        const webpBuffers = [];
-        for (const frame of frames) {
-            const webpBuffer = await new Promise((resolve, reject) => {
-                execFile(cwebp, ['-q', '80', '-'], { input: frame }, (error, stdout) => {
-                    if (error) {
-                        return reject(error);
-                    }
-                    resolve(Buffer.from(stdout));
-                });
-            });
-            webpBuffers.push(webpBuffer);
-        }
-        return Buffer.concat(webpBuffers);
-    };
-
-    generateWebP(frames)
-        .then((webpBuffer) => {
-            res.setHeader('Content-Type', 'image/webp');
-            res.send(webpBuffer);
-        })
-        .catch((error) => {
-            console.error(`Error converting to WebP: ${error}`);
-            return res.status(500).json({ error: 'Error creating WebP animation' });
-        });
+    encoder.finish();
 });
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
