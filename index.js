@@ -1,7 +1,8 @@
 const express = require('express');
 const { createCanvas, registerFont } = require('canvas');
 const path = require('path');
-const { cwebp } = require('webp-converter');
+const cwebp = require('cwebp-bin');
+const { execFile } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -127,16 +128,14 @@ app.get('/animated-text-to-picture', async (req, res) => {
 
     // Convert frames to animated WebP in memory
     const generateWebP = async (frames) => {
-        const options = `-q 80 -d 100`; // Quality and delay
         const webpBuffers = [];
         for (const frame of frames) {
             const webpBuffer = await new Promise((resolve, reject) => {
-                cwebp(frame, "-o", options, (status, error, result) => {
-                    if (status === '100') {
-                        resolve(result);
-                    } else {
-                        reject(error);
+                execFile(cwebp, ['-q', '80', '-'], { input: frame }, (error, stdout) => {
+                    if (error) {
+                        return reject(error);
                     }
+                    resolve(Buffer.from(stdout));
                 });
             });
             webpBuffers.push(webpBuffer);
@@ -158,3 +157,4 @@ app.get('/animated-text-to-picture', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
