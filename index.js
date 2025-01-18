@@ -135,9 +135,9 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     // Warna dan sudut untuk frame
     const frames = [
-        { color: '#FF0000', angle: -5 * (Math.PI / 180) }, // Merah dengan rotasi -5°
-        { color: '#00FF00', angle: 5 * (Math.PI / 180) },  // Hijau dengan rotasi 5°
-        { color: '#0000FF', angle: -10 * (Math.PI / 180) }, // Biru dengan rotasi -10°
+        { color: '#e8dff5', angle: -5 * (Math.PI / 180) }, // Merah dengan rotasi -5°
+        { color: '#fce1e4', angle: 5 * (Math.PI / 180) },  // Hijau dengan rotasi 5°
+        { color: '#daeaf6', angle: -10 * (Math.PI / 180) }, // Biru dengan rotasi -10°
     ];
 
     // Generate setiap frame
