@@ -30,7 +30,7 @@ app.get('/text-to-picture', (req, res) => {
     // Gaya teks
     ctx.fillStyle = '#FFFFFF'; // Warna teks putih
     ctx.strokeStyle = '#000000'; // Outline hitam
-    ctx.lineWidth = 15; // Ketebalan outline
+    ctx.lineWidth = 50; // Ketebalan outline
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -105,7 +105,7 @@ app.get('/animated-text-to-picture', (req, res) => {
         // Gaya teks
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Outline hitam
-        ctx.lineWidth = 15; // Ketebalan outline
+        ctx.lineWidth = 50; // Ketebalan outline
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
