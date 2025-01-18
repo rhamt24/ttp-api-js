@@ -6,9 +6,12 @@ const GIFEncoder = require('gifencoder');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Register the font
-registerFont(path.join(__dirname, 'fonts', 'Montserrat-Bold.ttf'), { family: 'Montserrat' });
+// Register the italic font
+registerFont(path.join(__dirname, 'fonts', 'Montserrat-BlackItalic.ttf'), { family: 'Montserrat' });
 
+/**
+ * Static Text-to-Picture (TTP)
+ */
 app.get('/text-to-picture', (req, res) => {
     const { text, format = 'png' } = req.query;
     if (!text) {
@@ -16,13 +19,12 @@ app.get('/text-to-picture', (req, res) => {
     }
 
     const upperText = text.toUpperCase();
-
     const canvasSize = 800;
     const padding = 20;
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Background (transparent)
+    // Clear the background (transparent)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Text styling
@@ -32,55 +34,29 @@ app.get('/text-to-picture', (req, res) => {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Function to split text into multiple lines
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-        const words = text.split(' ');
-        let line = '';
-        let lines = [];
-        for (let n = 0; n < words.length; n++) {
-            let testLine = line + words[n] + ' ';
-            let metrics = context.measureText(testLine);
-            let testWidth = metrics.width;
-            if (testWidth > maxWidth && n > 0) {
-                lines.push(line);
-                line = words[n] + ' ';
-            } else {
-                line = testLine;
-            }
-        }
-        lines.push(line);
-
-        for (let i = 0; i < lines.length; i++) {
-            context.strokeText(lines[i], x, y); // Draw outline
-            context.fillText(lines[i], x, y); // Draw text
-            y += lineHeight;
-        }
-    }
-
-    // Determine the maximum font size that fits the canvas width and height
-    let fontSize = 300; // Start with a larger font size
+    // Determine font size
+    let fontSize = 300; // Start large
     ctx.font = `${fontSize}px "Montserrat"`;
     let textWidth = ctx.measureText(upperText).width;
-    let lineHeight = fontSize * 1.2;
-    let textHeight = lineHeight;
 
-    while ((textWidth > canvasSize - 2 * padding || textHeight > canvasSize - 2 * padding) && fontSize > 10) {
+    while (textWidth > canvasSize - 2 * padding && fontSize > 10) {
         fontSize--;
         ctx.font = `${fontSize}px "Montserrat"`;
         textWidth = ctx.measureText(upperText).width;
-        lineHeight = fontSize * 1.2;
-        textHeight = lineHeight * Math.ceil(textWidth / (canvasSize - 2 * padding));
     }
 
-    const maxTextWidth = canvasSize - 2 * padding;
+    // Rotate the canvas slightly
+    const rotationAngle = -5 * (Math.PI / 180); // Tilt by -5 degrees
+    ctx.translate(canvas.width / 2, canvas.height / 2); // Move to center
+    ctx.rotate(rotationAngle);
 
-    // Check if the text fits in one line
-    if (textWidth <= maxTextWidth) {
-        ctx.strokeText(upperText, canvasSize / 2, canvasSize / 2); // Draw outline
-        ctx.fillText(upperText, canvasSize / 2, canvasSize / 2); // Draw text
-    } else {
-        wrapText(ctx, upperText, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
-    }
+    // Draw the text
+    ctx.strokeText(upperText, 0, 0); // Outline
+    ctx.fillText(upperText, 0, 0); // Fill
+
+    // Reset rotation
+    ctx.rotate(-rotationAngle);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
     // Convert canvas to image
     if (format === 'jpg' || format === 'jpeg') {
@@ -94,6 +70,9 @@ app.get('/text-to-picture', (req, res) => {
     }
 });
 
+/**
+ * Animated Text-to-Picture (ATTP)
+ */
 app.get('/animated-text-to-picture', (req, res) => {
     const { text } = req.query;
     if (!text) {
@@ -101,17 +80,17 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const upperText = text.toUpperCase();
-
     const canvasSize = 800;
     const padding = 20;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
+
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
 
     encoder.start();
-    encoder.setRepeat(0); // 0 for repeat, -1 for no-repeat
-    encoder.setDelay(500); // frame delay in ms
-    encoder.setQuality(10); // image quality. 10 is default.
+    encoder.setRepeat(0); // 0 for infinite repeat
+    encoder.setDelay(500); // Delay per frame in ms
+    encoder.setQuality(10); // Image quality (lower is better)
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -120,77 +99,57 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.setTransparent(0x000000);
 
     // Function to draw text
-    function drawText(color) {
+    function drawText(ctx, color, rotationAngle) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Text styling
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Black outline
         ctx.lineWidth = 4;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Determine the maximum font size that fits the canvas width and height
-        let fontSize = 300; // Start with a larger font size
+        // Determine font size
+        let fontSize = 300; // Start large
         ctx.font = `${fontSize}px "Montserrat"`;
         let textWidth = ctx.measureText(upperText).width;
-        let lineHeight = fontSize * 1.2;
-        let textHeight = lineHeight;
 
-        while ((textWidth > canvasSize - 2 * padding || textHeight > canvasSize - 2 * padding) && fontSize > 10) {
+        while (textWidth > canvasSize - 2 * padding && fontSize > 10) {
             fontSize--;
             ctx.font = `${fontSize}px "Montserrat"`;
             textWidth = ctx.measureText(upperText).width;
-            lineHeight = fontSize * 1.2;
-            textHeight = lineHeight * Math.ceil(textWidth / (canvasSize - 2 * padding));
         }
 
-        const maxTextWidth = canvasSize - 2 * padding;
+        // Rotate the canvas slightly
+        ctx.translate(canvas.width / 2, canvas.height / 2); // Move to center
+        ctx.rotate(rotationAngle);
 
-        // Check if the text fits in one line
-        if (textWidth <= maxTextWidth) {
-            ctx.strokeText(upperText, canvasSize / 2, canvasSize / 2); // Draw outline
-            ctx.fillText(upperText, canvasSize / 2, canvasSize / 2); // Draw text
-        } else {
-            wrapText(ctx, upperText, canvasSize / 2, padding + lineHeight / 2, maxTextWidth, lineHeight);
-        }
+        // Draw the text
+        ctx.strokeText(upperText, 0, 0); // Outline
+        ctx.fillText(upperText, 0, 0); // Fill
+
+        // Reset rotation
+        ctx.rotate(-rotationAngle);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
     }
 
-    // Function to split text into multiple lines
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-        const words = text.split(' ');
-        let line = '';
-        let lines = [];
-        for (let n = 0; n < words.length; n++) {
-            let testLine = line + words[n] + ' ';
-            let metrics = context.measureText(testLine);
-            let testWidth = metrics.width;
-            if (testWidth > maxWidth && n > 0) {
-                lines.push(line);
-                line = words[n] + ' ';
-            } else {
-                line = testLine;
-            }
-        }
-        lines.push(line);
+    // Colors and angles for frames
+    const frames = [
+        { color: '#FF0000', angle: -5 * (Math.PI / 180) }, // Red with -5° tilt
+        { color: '#00FF00', angle: 5 * (Math.PI / 180) },  // Green with 5° tilt
+        { color: '#0000FF', angle: -10 * (Math.PI / 180) }, // Blue with -10° tilt
+    ];
 
-        for (let i = 0; i < lines.length; i++) {
-            context.strokeText(lines[i], x, y); // Draw outline
-            context.fillText(lines[i], x, y); // Draw text
-            y += lineHeight;
-        }
-    }
-
-    const colors = ['#FF0000', '#00FF00', '#0000FF']; // Red, Green, Blue
-
-    for (let i = 0; i < colors.length; i++) {
-        drawText(colors[i]);
+    // Generate frames
+    for (const frame of frames) {
+        drawText(ctx, frame.color, frame.angle);
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
 });
 
+// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-        
