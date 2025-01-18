@@ -1,5 +1,5 @@
 const express = require('express');
-const { createCanvas, registerFont } = require('canvas');
+const { createCanvas, registerFont } = require('skia-canvas');
 const path = require('path');
 const GIFEncoder = require('gifencoder');
 
