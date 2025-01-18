@@ -7,12 +7,12 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "canvas": "^2.8.0",
     "express": "^4.17.1",
-    "gifencoder": "^2.0.1",
-    "skia-canvas": "^0.9.0" 
+    "gifencoder": "^2.0.1"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=12.0.0"
   },
   "author": "Your Name",
   "license": "MIT"
