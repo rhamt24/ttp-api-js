@@ -11,11 +11,5 @@
       "src": "/(.*)",
       "dest": "/index.js"
     }
-  ],
-  "build": {
-    "env": {
-      "NODE_VERSION": "18",
-      "PKG_CONFIG_PATH": "/usr/lib/pkgconfig"
-    }
-  }
+  ]
 }
