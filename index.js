@@ -24,18 +24,15 @@ app.get('/text-to-picture', (req, res) => {
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Clear the background (transparent)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Text styling
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.strokeStyle = '#000000'; // Black outline
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 10; // Thicker outline
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Determine font size
-    let fontSize = 300; // Start large
+    let fontSize = 300;
     ctx.font = `${fontSize}px "Montserrat"`;
     let textWidth = ctx.measureText(upperText).width;
 
@@ -45,20 +42,16 @@ app.get('/text-to-picture', (req, res) => {
         textWidth = ctx.measureText(upperText).width;
     }
 
-    // Rotate the canvas slightly
-    const rotationAngle = -5 * (Math.PI / 180); // Tilt by -5 degrees
-    ctx.translate(canvas.width / 2, canvas.height / 2); // Move to center
+    const rotationAngle = -5 * (Math.PI / 180);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(rotationAngle);
 
-    // Draw the text
-    ctx.strokeText(upperText, 0, 0); // Outline
-    ctx.fillText(upperText, 0, 0); // Fill
+    ctx.strokeText(upperText, 0, 0);
+    ctx.fillText(upperText, 0, 0);
 
-    // Reset rotation
     ctx.rotate(-rotationAngle);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-    // Convert canvas to image
     if (format === 'jpg' || format === 'jpeg') {
         const buffer = canvas.toBuffer('image/jpeg');
         res.set('Content-Type', 'image/jpeg');
@@ -88,29 +81,25 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.createReadStream().pipe(res);
 
     encoder.start();
-    encoder.setRepeat(0); // 0 for infinite repeat
-    encoder.setDelay(500); // Delay per frame in ms
-    encoder.setQuality(10); // Image quality (lower is better)
+    encoder.setRepeat(0);
+    encoder.setDelay(500);
+    encoder.setQuality(10);
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Ensure background is transparent
     encoder.setTransparent(0x000000);
 
-    // Function to draw text
     function drawText(ctx, color, rotationAngle) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Text styling
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Black outline
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 10; // Thicker outline
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Determine font size
-        let fontSize = 300; // Start large
+        let fontSize = 300;
         ctx.font = `${fontSize}px "Montserrat"`;
         let textWidth = ctx.measureText(upperText).width;
 
@@ -120,27 +109,22 @@ app.get('/animated-text-to-picture', (req, res) => {
             textWidth = ctx.measureText(upperText).width;
         }
 
-        // Rotate the canvas slightly
-        ctx.translate(canvas.width / 2, canvas.height / 2); // Move to center
+        ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(rotationAngle);
 
-        // Draw the text
-        ctx.strokeText(upperText, 0, 0); // Outline
-        ctx.fillText(upperText, 0, 0); // Fill
+        ctx.strokeText(upperText, 0, 0);
+        ctx.fillText(upperText, 0, 0);
 
-        // Reset rotation
         ctx.rotate(-rotationAngle);
         ctx.translate(-canvas.width / 2, -canvas.height / 2);
     }
 
-    // Colors and angles for frames
     const frames = [
-        { color: '#FF0000', angle: -5 * (Math.PI / 180) }, // Red with -5° tilt
-        { color: '#00FF00', angle: 5 * (Math.PI / 180) },  // Green with 5° tilt
-        { color: '#0000FF', angle: -10 * (Math.PI / 180) }, // Blue with -10° tilt
+        { color: '#FF0000', angle: -5 * (Math.PI / 180) },
+        { color: '#00FF00', angle: 5 * (Math.PI / 180) },
+        { color: '#0000FF', angle: -10 * (Math.PI / 180) },
     ];
 
-    // Generate frames
     for (const frame of frames) {
         drawText(ctx, frame.color, frame.angle);
         encoder.addFrame(ctx);
@@ -149,7 +133,6 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.finish();
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
