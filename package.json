@@ -4,6 +4,7 @@
   "description": "A Node.js application to convert text to static or animated images.",
   "main": "index.js",
   "scripts": {
+    "postinstall": "apt-get update && apt-get install -y libpixman-1-dev libcairo2-dev",
     "start": "node index.js"
   },
   "dependencies": {
@@ -12,7 +13,7 @@
     "gifencoder": "^2.0.1"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": "18.x"
   },
   "author": "Your Name",
   "license": "MIT"
