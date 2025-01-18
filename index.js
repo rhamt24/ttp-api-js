@@ -80,7 +80,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const upperText = text.toUpperCase();
-    const canvasSize = 1000; // Ukuran kanvas lebih besar
+    const canvasSize = 1000; // Ukuran kanvas
     const padding = 50;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
@@ -89,17 +89,22 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     encoder.start();
     encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
-    encoder.setDelay(500); // Delay per frame dalam ms
-    encoder.setQuality(10); // Kualitas gambar (angka lebih rendah lebih baik)
+    encoder.setDelay(50); // Delay per frame (50ms)
+    encoder.setQuality(10); // Kualitas gambar
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Transparansi background untuk GIF
-    encoder.setTransparent(0x000000);
+    // Warna pastel
+    const colors = ['#add8e6', '#ffc0cb', '#dda0dd']; // Biru, pink, ungu
+
+    // Jumlah frame dan animasi memantul
+    const totalFrames = 30; // Total frame
+    const bounceHeight = 100; // Tinggi pantulan
+    const baseY = canvasSize / 2;
 
     // Fungsi untuk menggambar teks
-    function drawText(ctx, color, rotationAngle) {
+    function drawText(ctx, color, yOffset) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Gaya teks
@@ -120,29 +125,18 @@ app.get('/animated-text-to-picture', (req, res) => {
             textWidth = ctx.measureText(upperText).width;
         }
 
-        // Atur rotasi teks
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(rotationAngle);
-
-        // Gambar teks dengan outline
-        ctx.strokeText(upperText, 0, 0); // Garis tepi
-        ctx.fillText(upperText, 0, 0);   // Isi teks
-
-        // Reset rotasi
-        ctx.rotate(-rotationAngle);
-        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        // Posisi teks
+        ctx.strokeText(upperText, canvas.width / 2, baseY + yOffset);
+        ctx.fillText(upperText, canvas.width / 2, baseY + yOffset);
     }
 
-    // Warna dan sudut untuk frame
-    const frames = [
-        { color: '#e8dff5', angle: -5 * (Math.PI / 180) }, // Merah dengan rotasi -5°
-        { color: '#fce1e4', angle: 5 * (Math.PI / 180) },  // Hijau dengan rotasi 5°
-        { color: '#daeaf6', angle: -10 * (Math.PI / 180) }, // Biru dengan rotasi -10°
-    ];
+    // Generate frame animasi
+    for (let i = 0; i < totalFrames; i++) {
+        const progress = i / totalFrames;
+        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight; // Gerakan memantul
+        const color = colors[i % colors.length]; // Warna berganti setiap frame
 
-    // Generate setiap frame
-    for (const frame of frames) {
-        drawText(ctx, frame.color, frame.angle);
+        drawText(ctx, color, bounce);
         encoder.addFrame(ctx);
     }
 
