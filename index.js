@@ -80,7 +80,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const upperText = text.toUpperCase();
-    const canvasSize = 1000; // Ukuran kanvas
+    const canvasSize = 500; // Ukuran kanvas
     const padding = 50;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
@@ -90,7 +90,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.start();
     encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
     encoder.setDelay(50); // Delay per frame (50ms)
-    encoder.setQuality(10); // Kualitas gambar
+    encoder.setQuality(20); // Kualitas gambar
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -99,7 +99,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     const colors = ['#add8e6', '#ffc0cb', '#dda0dd']; // Biru, pink, ungu
 
     // Jumlah frame dan animasi memantul
-    const totalFrames = 30; // Total frame
+    const totalFrames = 20; // Total frame
     const bounceHeight = 100; // Tinggi pantulan
     const baseY = canvasSize / 2;
 
