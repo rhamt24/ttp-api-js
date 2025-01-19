@@ -80,7 +80,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const upperText = text.toUpperCase();
-    const canvasSize = 500; // Ukuran kanvas
+    const canvasSize = 500;
     const padding = 50;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
@@ -88,33 +88,28 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.createReadStream().pipe(res);
 
     encoder.start();
-    encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
-    encoder.setDelay(50); // Delay per frame (50ms)
-    encoder.setQuality(20); // Kualitas gambar
+    encoder.setRepeat(0); 
+    encoder.setDelay(100); // Delay per frame (100ms)
+    encoder.setQuality(20); 
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Warna pastel
-    const colors = ['#a7a7e7', '#a7c7e7', '#a7e7e7']; // Biru, pink, ungu
+    const colors = ['#a7a7e7', '#a7c7e7', '#a7e7e7'];
 
-    // Jumlah frame dan animasi memantul
-    const totalFrames = 20; // Total frame
-    const bounceHeight = 100; // Tinggi pantulan
+    const totalFrames = 60; 
+    const bounceHeight = 100;
     const baseY = canvasSize / 2;
 
-    // Fungsi untuk menggambar teks
     function drawText(ctx, color, yOffset) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Hapus latar belakang tanpa warna solid (transparan)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Gaya teks
-        ctx.fillStyle = color; // Warna teks
-        ctx.strokeStyle = '#000000'; // Outline hitam
-        ctx.lineWidth = 25; // Ketebalan outline
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 25;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Menentukan ukuran font
         let fontSize = 300;
         ctx.font = `${fontSize}px "Montserrat"`;
         let textWidth = ctx.measureText(upperText).width;
@@ -125,16 +120,14 @@ app.get('/animated-text-to-picture', (req, res) => {
             textWidth = ctx.measureText(upperText).width;
         }
 
-        // Posisi teks
         ctx.strokeText(upperText, canvas.width / 2, baseY + yOffset);
         ctx.fillText(upperText, canvas.width / 2, baseY + yOffset);
     }
 
-    // Generate frame animasi
     for (let i = 0; i < totalFrames; i++) {
         const progress = i / totalFrames;
-        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight; // Gerakan memantul
-        const color = colors[i % colors.length]; // Warna berganti setiap frame
+        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight;
+        const color = colors[Math.floor(i / 3) % colors.length];
 
         drawText(ctx, color, bounce);
         encoder.addFrame(ctx);
