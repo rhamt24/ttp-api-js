@@ -90,13 +90,14 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.start();
     encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
     encoder.setDelay(50); // Delay per frame (50ms)
+    encoder.setTransparent(); // Atur latar belakang transparan
     encoder.setQuality(20); // Kualitas gambar
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Warna pastel
-    const colors = ['#add8e6', '#ffc0cb', '#dda0dd']; // Biru, pink, ungu
+    // Warna biru pastel (berbeda)
+    const colors = ['#A7C7E7', '#B0D6E7', '#C0E0E7', '#D1EAF0', '#E2F4F7'];
 
     // Jumlah frame dan animasi memantul
     const totalFrames = 20; // Total frame
@@ -105,7 +106,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     // Fungsi untuk menggambar teks
     function drawText(ctx, color, yOffset) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Hapus latar belakang tanpa warna solid (transparan)
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Hapus latar belakang transparan
 
         // Gaya teks
         ctx.fillStyle = color; // Warna teks
