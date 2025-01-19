@@ -80,37 +80,42 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const upperText = text.toUpperCase();
-    const canvasSize = 800;
-    const padding = 20;
+    const canvasSize = 500; // Ukuran kanvas
+    const padding = 50;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
 
     encoder.start();
-    encoder.setRepeat(0); // 0 for infinite repeat
-    encoder.setDelay(500); // Delay per frame in ms
-    encoder.setQuality(10); // Image quality (lower is better)
+    encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
+    encoder.setDelay(50); // Delay per frame (50ms)
+    encoder.setQuality(20); // Kualitas gambar
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Ensure background is transparent
-    encoder.setTransparent(0x000000);
+    // Warna pastel
+    const colors = ['#add8e6', '#ffc0cb', '#dda0dd']; // Biru, pink, ungu
 
-    // Function to draw text
-    function drawText(ctx, color, rotationAngle) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Jumlah frame dan animasi memantul
+    const totalFrames = 20; // Total frame
+    const bounceHeight = 100; // Tinggi pantulan
+    const baseY = canvasSize / 2;
 
-        // Text styling
-        ctx.fillStyle = color;
-        ctx.strokeStyle = '#000000'; // Black outline
-        ctx.lineWidth = 4;
+    // Fungsi untuk menggambar teks
+    function drawText(ctx, color, yOffset) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Hapus latar belakang tanpa warna solid (transparan)
+
+        // Gaya teks
+        ctx.fillStyle = color; // Warna teks
+        ctx.strokeStyle = '#000000'; // Outline hitam
+        ctx.lineWidth = 25; // Ketebalan outline
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Determine font size
-        let fontSize = 300; // Start large
+        // Menentukan ukuran font
+        let fontSize = 300;
         ctx.font = `${fontSize}px "Montserrat"`;
         let textWidth = ctx.measureText(upperText).width;
 
@@ -120,29 +125,18 @@ app.get('/animated-text-to-picture', (req, res) => {
             textWidth = ctx.measureText(upperText).width;
         }
 
-        // Rotate the canvas slightly
-        ctx.translate(canvas.width / 2, canvas.height / 2); // Move to center
-        ctx.rotate(rotationAngle);
-
-        // Draw the text
-        ctx.strokeText(upperText, 0, 0); // Outline
-        ctx.fillText(upperText, 0, 0); // Fill
-
-        // Reset rotation
-        ctx.rotate(-rotationAngle);
-        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        // Posisi teks
+        ctx.strokeText(upperText, canvas.width / 2, baseY + yOffset);
+        ctx.fillText(upperText, canvas.width / 2, baseY + yOffset);
     }
 
-    // Colors and angles for frames
-    const frames = [
-        { color: '#FF0000', angle: -5 * (Math.PI / 180) }, // Red with -5° tilt
-        { color: '#00FF00', angle: 5 * (Math.PI / 180) },  // Green with 5° tilt
-        { color: '#0000FF', angle: -10 * (Math.PI / 180) }, // Blue with -10° tilt
-    ];
+    // Generate frame animasi
+    for (let i = 0; i < totalFrames; i++) {
+        const progress = i / totalFrames;
+        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight; // Gerakan memantul
+        const color = colors[i % colors.length]; // Warna berganti setiap frame
 
-    // Generate frames
-    for (const frame of frames) {
-        drawText(ctx, frame.color, frame.angle);
+        drawText(ctx, color, bounce);
         encoder.addFrame(ctx);
     }
 
