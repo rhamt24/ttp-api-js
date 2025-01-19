@@ -91,6 +91,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
     encoder.setDelay(50); // Delay per frame (50ms)
     encoder.setQuality(20); // Kualitas gambar
+    encoder.setTransparent(0x00FF00); // Warna transparansi (green screen-like)
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -105,7 +106,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     // Fungsi untuk menggambar teks
     function drawText(ctx, color, yOffset) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Bersihkan kanvas (transparan)
 
         // Gaya teks
         ctx.fillStyle = color;
