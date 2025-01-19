@@ -30,7 +30,7 @@ app.get('/text-to-picture', (req, res) => {
     // Text styling
     ctx.fillStyle = '#FFFFFF'; // White text
     ctx.strokeStyle = '#000000'; // Black outline
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 20;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
