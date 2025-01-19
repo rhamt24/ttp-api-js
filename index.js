@@ -89,9 +89,9 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     encoder.start();
     encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
-    encoder.setDelay(50); // Delay per frame (50ms)
-    encoder.setQuality(20); // Kualitas gambar
-    encoder.setTransparent(0x00FF00); // Warna transparansi (green screen-like)
+    encoder.setDelay(30); // Delay per frame (30ms untuk animasi halus)
+    encoder.setQuality(10); // Kualitas gambar tinggi
+    encoder.setTransparent(0x00FF00); // Warna transparansi (green screen)
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -100,7 +100,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     const colors = ['#add8e6', '#ffc0cb', '#dda0dd']; // Biru, pink, ungu
 
     // Jumlah frame dan animasi memantul
-    const totalFrames = 20; // Total frame
+    const totalFrames = 60; // Total frame untuk animasi halus
     const bounceHeight = 100; // Tinggi pantulan
     const baseY = canvasSize / 2;
 
@@ -135,7 +135,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     for (let i = 0; i < totalFrames; i++) {
         const progress = i / totalFrames;
         const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight; // Gerakan memantul
-        const color = colors[i % colors.length]; // Warna berganti setiap frame
+        const color = colors[Math.floor(progress * colors.length) % colors.length]; // Warna berubah secara smooth
 
         drawText(ctx, color, bounce);
         encoder.addFrame(ctx);
