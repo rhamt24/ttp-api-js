@@ -97,7 +97,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     const colors = ['#a7a7e7', '#a7c7e7', '#a7e7e7'];
 
-    const totalFrames = 60; 
+    const totalFrames = 30; 
     const bounceHeight = 100;
     const baseY = canvasSize / 2;
 
