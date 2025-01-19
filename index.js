@@ -90,7 +90,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.start();
     encoder.setRepeat(0); // 0 untuk pengulangan tak terbatas
     encoder.setDelay(30); // Delay per frame (30ms untuk animasi halus)
-    encoder.setQuality(10); // Kualitas gambar tinggi
+    encoder.setQuality(20); // Kualitas gambar tinggi
     encoder.setTransparent(0x00FF00); // Warna transparansi (green screen)
 
     const canvas = createCanvas(canvasSize, canvasSize);
@@ -100,7 +100,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     const colors = ['#add8e6', '#ffc0cb', '#dda0dd']; // Biru, pink, ungu
 
     // Jumlah frame dan animasi memantul
-    const totalFrames = 60; // Total frame untuk animasi halus
+    const totalFrames = 20; // Total frame untuk animasi halus
     const bounceHeight = 100; // Tinggi pantulan
     const baseY = canvasSize / 2;
 
@@ -111,7 +111,7 @@ app.get('/animated-text-to-picture', (req, res) => {
         // Gaya teks
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000'; // Outline hitam
-        ctx.lineWidth = 25; // Ketebalan outline
+        ctx.lineWidth = 15; // Ketebalan outline
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
