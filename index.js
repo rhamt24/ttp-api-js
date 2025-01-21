@@ -93,7 +93,7 @@ app.get('/animated-text-to-picture', (req, res) => {
     const ctx = canvas.getContext('2d');
 
     const colors = ['#a7a7e7', '#a7c7e7', '#a7e7e7'];
-    const totalFrames = 30;
+    const totalFrames = 24;
     const bounceHeight = 50;
 
     function drawText(ctx, color, yOffset) {
