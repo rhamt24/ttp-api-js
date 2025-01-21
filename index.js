@@ -26,11 +26,7 @@ app.get('/text-to-picture', (req, res) => {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Apply italic effect (shear transform)
-    const shearX = -0.2;
-    ctx.transform(1, 0, shearX, 1, 0, 0);
-
-    // Text styling
+    // Set text styling
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 20;
@@ -76,6 +72,12 @@ app.get('/text-to-picture', (req, res) => {
 
     const totalHeight = splitText.length * lineHeight;
     const startY = (canvasSize - totalHeight) / 2 + lineHeight / 2;
+
+    // Apply rotation for slanted text
+    const angle = -0.2; // Adjust this for more or less slant
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(angle);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
     splitText.forEach((line, index) => {
         const y = startY + index * lineHeight;
