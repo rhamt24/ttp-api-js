@@ -27,6 +27,10 @@ app.get('/text-to-picture', (req, res) => {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Apply italic effect (shear transform)
+    const shearX = -0.2; // Adjust the shear angle
+    ctx.transform(1, 0, shearX, 1, 0, 0);
+
     // Text styling
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#000000';
@@ -94,6 +98,10 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     function drawText(ctx, color, yOffset) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Apply italic effect (shear transform)
+        const shearX = -0.2; // Adjust the shear angle
+        ctx.transform(1, 0, shearX, 1, 0, 0);
 
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000';
