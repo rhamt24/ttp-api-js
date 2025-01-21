@@ -18,47 +18,39 @@ app.get('/text-to-picture', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const upperText = text.toUpperCase();
+    const splitText = text.toUpperCase().match(/.{1,22}/g); // Split text into chunks of 22 characters
     const canvasSize = 800;
     const padding = 20;
+    const lineHeight = 100; // Line spacing
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Clear the background (transparent)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Text styling
-    ctx.fillStyle = '#FFFFFF'; // White text
-    ctx.strokeStyle = '#000000'; // Black outline
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 20;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Determine font size
-    let fontSize = 300; // Start large
+    let fontSize = 300;
     ctx.font = `${fontSize}px "Montserrat"`;
-    let textWidth = ctx.measureText(upperText).width;
 
-    while (textWidth > canvasSize - 2 * padding && fontSize > 10) {
+    while (splitText.some(line => ctx.measureText(line).width > canvasSize - 2 * padding) && fontSize > 10) {
         fontSize--;
         ctx.font = `${fontSize}px "Montserrat"`;
-        textWidth = ctx.measureText(upperText).width;
     }
 
-    // Rotate the canvas slightly
-    const rotationAngle = -5 * (Math.PI / 180); // Tilt by -5 degrees
-    ctx.translate(canvas.width / 2, canvas.height / 2); // Move to center
-    ctx.rotate(rotationAngle);
+    const totalHeight = splitText.length * lineHeight;
+    const startY = (canvasSize - totalHeight) / 2 + lineHeight / 2;
 
-    // Draw the text
-    ctx.strokeText(upperText, 0, 0); // Outline
-    ctx.fillText(upperText, 0, 0); // Fill
+    splitText.forEach((line, index) => {
+        const y = startY + index * lineHeight;
+        ctx.strokeText(line, canvas.width / 2, y);
+        ctx.fillText(line, canvas.width / 2, y);
+    });
 
-    // Reset rotation
-    ctx.rotate(-rotationAngle);
-    ctx.translate(-canvas.width / 2, -canvas.height / 2);
-
-    // Convert canvas to image
     if (format === 'jpg' || format === 'jpeg') {
         const buffer = canvas.toBuffer('image/jpeg');
         res.set('Content-Type', 'image/jpeg');
@@ -79,27 +71,26 @@ app.get('/animated-text-to-picture', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const upperText = text.toUpperCase();
+    const splitText = text.toUpperCase().match(/.{1,22}/g); // Split text into chunks of 22 characters
     const canvasSize = 500;
     const padding = 50;
+    const lineHeight = 70;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
 
     encoder.start();
-    encoder.setRepeat(0); 
-    encoder.setDelay(100); // Delay per frame (100ms)
-    encoder.setQuality(20); 
+    encoder.setRepeat(0); // Loop the GIF
+    encoder.setDelay(100); // Delay per frame
+    encoder.setQuality(20); // Quality of the GIF
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
     const colors = ['#a7a7e7', '#a7c7e7', '#a7e7e7'];
-
-    const totalFrames = 30; 
-    const bounceHeight = 100;
-    const baseY = canvasSize / 2;
+    const totalFrames = 30;
+    const bounceHeight = 50;
 
     function drawText(ctx, color, yOffset) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -112,16 +103,20 @@ app.get('/animated-text-to-picture', (req, res) => {
 
         let fontSize = 300;
         ctx.font = `${fontSize}px "Montserrat"`;
-        let textWidth = ctx.measureText(upperText).width;
 
-        while (textWidth > canvasSize - 2 * padding && fontSize > 10) {
+        while (splitText.some(line => ctx.measureText(line).width > canvasSize - 2 * padding) && fontSize > 10) {
             fontSize--;
             ctx.font = `${fontSize}px "Montserrat"`;
-            textWidth = ctx.measureText(upperText).width;
         }
 
-        ctx.strokeText(upperText, canvas.width / 2, baseY + yOffset);
-        ctx.fillText(upperText, canvas.width / 2, baseY + yOffset);
+        const totalHeight = splitText.length * lineHeight;
+        const startY = (canvasSize - totalHeight) / 2 + lineHeight / 2;
+
+        splitText.forEach((line, index) => {
+            const y = startY + index * lineHeight + yOffset;
+            ctx.strokeText(line, canvas.width / 2, y);
+            ctx.fillText(line, canvas.width / 2, y);
+        });
     }
 
     for (let i = 0; i < totalFrames; i++) {
