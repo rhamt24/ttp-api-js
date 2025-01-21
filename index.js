@@ -40,23 +40,39 @@ app.get('/text-to-picture', (req, res) => {
     let fontSize = 300;
     ctx.font = `${fontSize}px "Montserrat"`;
 
-    // Menyesuaikan fontSize agar teks tidak keluar dari batas kanvas
+    // Adjust font size if the text is too wide
     while (ctx.measureText(text).width > canvasSize - 2 * padding && fontSize > 10) {
         fontSize--;
         ctx.font = `${fontSize}px "Montserrat"`;
     }
 
-    // Membagi teks secara dinamis berdasarkan lebar kanvas
-    const splitText = [];
-    let tempLine = '';
-    for (let i = 0; i < text.length; i++) {
-        tempLine += text[i];
-        if (ctx.measureText(tempLine).width > canvasSize - 2 * padding) {
-            splitText.push(tempLine.trim());
-            tempLine = '';
+    // Function to split text dynamically based on canvas width
+    function splitTextDynamically(ctx, text, canvasWidth, padding) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = ctx.measureText(testLine).width;
+
+            if (testWidth > canvasWidth - 2 * padding) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        });
+
+        if (currentLine) {
+            lines.push(currentLine);
         }
+
+        return lines;
     }
-    if (tempLine) splitText.push(tempLine.trim());
+
+    // Split the text into lines that fit within the canvas
+    const splitText = splitTextDynamically(ctx, text, canvasSize, padding);
 
     const totalHeight = splitText.length * lineHeight;
     const startY = (canvasSize - totalHeight) / 2 + lineHeight / 2;
@@ -67,6 +83,7 @@ app.get('/text-to-picture', (req, res) => {
         ctx.fillText(line, canvas.width / 2, y);
     });
 
+    // Output the image
     if (format === 'jpg' || format === 'jpeg') {
         const buffer = canvas.toBuffer('image/jpeg');
         res.set('Content-Type', 'image/jpeg');
