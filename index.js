@@ -27,9 +27,9 @@ app.get('/text-to-picture', (req, res) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Set text styling
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 20;
+    ctx.fillStyle = '#FFFFFF'; // Fill color for the text
+    ctx.strokeStyle = '#000000'; // Outline color
+    ctx.lineWidth = 8; // Outline width
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -79,9 +79,14 @@ app.get('/text-to-picture', (req, res) => {
     ctx.rotate(angle);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
+    // Draw each line with outline and fill
     splitText.forEach((line, index) => {
         const y = startY + index * lineHeight;
+
+        // Draw outline (stroke) first
         ctx.strokeText(line, canvas.width / 2, y);
+
+        // Draw text fill
         ctx.fillText(line, canvas.width / 2, y);
     });
 
