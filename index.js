@@ -199,6 +199,7 @@ app.get('/brat', (req, res) => {
 
     const canvasSize = 500;
     const padding = 20;
+    const lineHeight = 40;  // Jarak antar baris
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
@@ -206,7 +207,7 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek blur dan contrast
+    // Efek burik lebih ekstrem
     ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
     // Ukuran font awal
@@ -219,11 +220,44 @@ app.get('/brat', (req, res) => {
         ctx.font = `bold ${fontSize}px ArialNarrow`;
     }
 
+    // Fungsi untuk membagi teks menjadi beberapa baris sesuai lebar canvas
+    function splitTextIntoLines(ctx, text, canvasWidth, padding) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = ctx.measureText(testLine).width;
+
+            if (testWidth > canvasWidth - 2 * padding) {
+                lines.push(currentLine);
+                currentLine = word;  // Mulai baris baru dengan kata ini
+            } else {
+                currentLine = testLine;  // Tambah kata ke baris yang ada
+            }
+        });
+
+        if (currentLine) {
+            lines.push(currentLine);  // Tambahkan baris terakhir
+        }
+
+        return lines;
+    }
+
+    // Pisahkan teks menjadi beberapa baris
+    const splitText = splitTextIntoLines(ctx, text, canvasSize, padding);
+
     // Set posisi teks dimulai dari kiri atas
     ctx.fillStyle = '#000000';
-    ctx.textAlign = 'left';  // Menyusun teks dari kiri
-    ctx.textBaseline = 'top';  // Posisi teks mulai dari atas
-    ctx.fillText(text, padding, padding);  // Mulai dari kiri atas
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    let y = padding;  // Mulai dari posisi padding atas
+    splitText.forEach((line) => {
+        ctx.fillText(line, padding, y);
+        y += fontSize + lineHeight;  // Sesuaikan jarak antar baris
+    });
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
@@ -240,6 +274,7 @@ app.get('/bratvid', (req, res) => {
 
     const canvasSize = 500;
     const padding = 20;
+    const lineHeight = 40;
     const encoder = new GIFEncoder(canvasSize, canvasSize);
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
@@ -252,12 +287,17 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    // Split teks per frame
+    // Pisahkan teks menjadi beberapa baris
     const words = text.split(' ');
-    const frames = words.map((_, i) => words.slice(0, i + 1).join(' '));
+    const frames = [];
+    let currentText = '';
+    words.forEach((word, index) => {
+        currentText += word + ' ';
+        frames.push(currentText.trim());
+    });
 
     frames.forEach((frameText) => {
-        ctx.fillStyle = '#FFFFFF'; // Background putih
+        ctx.fillStyle = '#FFFFFF';  // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
         // Ukuran font awal
@@ -270,11 +310,44 @@ app.get('/bratvid', (req, res) => {
             ctx.font = `bold ${fontSize}px ArialNarrow`;
         }
 
+        // Fungsi untuk membagi teks menjadi beberapa baris sesuai lebar canvas
+        function splitTextIntoLines(ctx, text, canvasWidth, padding) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+
+            words.forEach(word => {
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                const testWidth = ctx.measureText(testLine).width;
+
+                if (testWidth > canvasWidth - 2 * padding) {
+                    lines.push(currentLine);
+                    currentLine = word;  // Mulai baris baru dengan kata ini
+                } else {
+                    currentLine = testLine;  // Tambah kata ke baris yang ada
+                }
+            });
+
+            if (currentLine) {
+                lines.push(currentLine);  // Tambahkan baris terakhir
+            }
+
+            return lines;
+        }
+
+        // Pisahkan teks menjadi beberapa baris
+        const splitText = splitTextIntoLines(ctx, frameText, canvasSize, padding);
+
         // Set posisi teks dimulai dari kiri atas
         ctx.fillStyle = '#000000';
-        ctx.textAlign = 'left';  // Menyusun teks dari kiri
-        ctx.textBaseline = 'top';  // Posisi teks mulai dari atas
-        ctx.fillText(frameText, padding, padding);  // Mulai dari kiri atas
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+
+        let y = padding;  // Mulai dari posisi padding atas
+        splitText.forEach((line) => {
+            ctx.fillText(line, padding, y);
+            y += fontSize + lineHeight;  // Sesuaikan jarak antar baris
+        });
 
         encoder.addFrame(ctx);
     });
