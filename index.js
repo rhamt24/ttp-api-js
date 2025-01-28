@@ -197,73 +197,57 @@ app.get('/brat', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasSize = 500;
+    const canvasSize = 800; // Ukuran lebih besar agar teks lebih muat
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Background putih
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = '#FFFFFF'; // Latar belakang putih
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik lebih ekstrem
-    ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
+    ctx.fillStyle = '#000000'; // Warna teks hitam
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-    // Menyesuaikan ukuran font berdasarkan panjang teks
-    let fontSize = 140;
-    const words = text.split(' ');
-
-    if (words.length > 3) {
-        fontSize = 120;
-    }
-    if (words.length > 6) {
-        fontSize = 100;
-    }
-    if (words.length > 10) {
-        fontSize = 80;
-    }
-
-    ctx.fillStyle = '#000000';
+    let fontSize = 150; // Mulai dari ukuran besar
     ctx.font = `bold ${fontSize}px ArialNarrow`;
-    ctx.textAlign = 'center'; // Pusatkan teks
-    ctx.textBaseline = 'middle'; // Pusatkan secara vertikal
 
-    // Split text dynamically for better fitting
-    const lines = splitTextDynamically(ctx, text, canvasSize, 20);
-    let y = (canvasSize - lines.length * fontSize) / 2; // Pusatkan teks vertikal
+    // Kurangi ukuran font jika teks terlalu panjang
+    while (ctx.measureText(text).width > canvasSize * 0.9 && fontSize > 30) {
+        fontSize -= 5;
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
+    }
 
-    lines.forEach((line) => {
-        ctx.fillText(line, canvasSize / 2, y); // Pusatkan teks secara horizontal
-        y += fontSize + 10; // Jarak antar baris
+    // Pisahkan teks menjadi beberapa baris jika panjang
+    function splitText(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            if (ctx.measureText(testLine).width > maxWidth) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = testLine;
+            }
+        });
+
+        if (currentLine) lines.push(currentLine);
+        return lines;
+    }
+
+    const lines = splitText(ctx, text, canvasSize * 0.8);
+    const lineHeight = fontSize * 1.2;
+    const startY = (canvasSize - lines.length * lineHeight) / 2;
+
+    lines.forEach((line, index) => {
+        ctx.fillText(line, canvasSize / 2, startY + index * lineHeight);
     });
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
 });
-
-// Function to split text dynamically based on canvas width
-function splitTextDynamically(ctx, text, canvasWidth, padding) {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = '';
-
-    words.forEach(word => {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const testWidth = ctx.measureText(testLine).width;
-
-        if (testWidth > canvasWidth - 2 * padding) {
-            lines.push(currentLine);
-            currentLine = word;
-        } else {
-            currentLine = testLine;
-        }
-    });
-
-    if (currentLine) {
-        lines.push(currentLine);
-    }
-
-    return lines;
-}
 
 /**
  * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
@@ -274,7 +258,7 @@ app.get('/bratvid', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasSize = 500;
+    const canvasSize = 800;
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
     const encoder = new GIFEncoder(canvasSize, canvasSize);
@@ -285,45 +269,36 @@ app.get('/bratvid', (req, res) => {
     encoder.start();
     encoder.setRepeat(0);
     encoder.setDelay(300);
-    encoder.setQuality(30);
+    encoder.setQuality(20);
 
     const words = text.split(' ');
-    let fontSize = 140;
+    let frames = words.length;
 
-    if (words.length > 3) {
-        fontSize = 120;
-    }
-    if (words.length > 6) {
-        fontSize = 100;
-    }
-    if (words.length > 10) {
-        fontSize = 80;
-    }
-
-    // Pusatkan teks secara vertikal dan horizontal
-    let y = 20;
-
-    const splitText = splitTextDynamically(ctx, text, canvasSize, 20);
-
-    for (let i = 0; i <= splitText.length; i++) {
-        ctx.fillStyle = '#FFFFFF'; // Background putih
+    for (let i = 0; i <= frames; i++) {
+        ctx.fillStyle = '#FFFFFF'; // Latar belakang putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik lebih ekstrem
-        ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
-
-        ctx.fillStyle = '#000000';
-        ctx.font = `bold ${fontSize}px ArialNarrow`;
+        ctx.fillStyle = '#000000'; // Warna teks hitam
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
 
-        let tempY = y;
-        const currentText = splitText.slice(0, i).join('\n');
+        let fontSize = 150;
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
 
-        currentText.split('\n').forEach((line) => {
-            ctx.fillText(line, canvasSize / 2, tempY);
-            tempY += fontSize + 10;
-        });
+        let yOffset = canvasSize / 2; // Posisi teks awal di tengah
+
+        // Efek teks sebelumnya mengecil ke atas
+        for (let j = 0; j < i; j++) {
+            let sizeFactor = 1 - (i - j) * 0.1; // Mengecilkan teks lama
+            if (sizeFactor > 0) {
+                ctx.font = `bold ${fontSize * sizeFactor}px ArialNarrow`;
+                ctx.fillText(words[j], canvasSize / 2, yOffset - (i - j) * 50);
+            }
+        }
+
+        if (i < words.length) {
+            ctx.font = `bold ${fontSize}px ArialNarrow`;
+            ctx.fillText(words[i], canvasSize / 2, yOffset);
+        }
 
         encoder.addFrame(ctx);
     }
