@@ -197,52 +197,34 @@ app.get('/brat', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasSize = 800; // Ukuran lebih besar agar teks lebih muat
+    const canvasSize = 500;
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#FFFFFF'; // Latar belakang putih
+    // Latar belakang putih
+    ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    ctx.fillStyle = '#000000'; // Warna teks hitam
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    // Efek burik lebih ekstrem
+    ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
 
-    let fontSize = 150; // Mulai dari ukuran besar
+    // Menyesuaikan ukuran font berdasarkan panjang teks
+    let fontSize = 120;
+    const words = text.split(' ');
+
+    if (words.length > 3) fontSize = 100;
+    if (words.length > 6) fontSize = 80;
+    if (words.length > 10) fontSize = 60;
+
+    ctx.fillStyle = '#000000';
     ctx.font = `bold ${fontSize}px ArialNarrow`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
 
-    // Kurangi ukuran font jika teks terlalu panjang
-    while (ctx.measureText(text).width > canvasSize * 0.9 && fontSize > 30) {
-        fontSize -= 5;
-        ctx.font = `bold ${fontSize}px ArialNarrow`;
-    }
-
-    // Pisahkan teks menjadi beberapa baris jika panjang
-    function splitText(ctx, text, maxWidth) {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = '';
-
-        words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            if (ctx.measureText(testLine).width > maxWidth) {
-                lines.push(currentLine);
-                currentLine = word;
-            } else {
-                currentLine = testLine;
-            }
-        });
-
-        if (currentLine) lines.push(currentLine);
-        return lines;
-    }
-
-    const lines = splitText(ctx, text, canvasSize * 0.8);
-    const lineHeight = fontSize * 1.2;
-    const startY = (canvasSize - lines.length * lineHeight) / 2;
-
-    lines.forEach((line, index) => {
-        ctx.fillText(line, canvasSize / 2, startY + index * lineHeight);
+    let y = 30; // Mepet ke atas dengan sedikit spasi
+    words.forEach((word) => {
+        ctx.fillText(word, 15, y);
+        y += fontSize + 10; // Jarak antar baris sesuai ukuran font
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -258,10 +240,10 @@ app.get('/bratvid', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasSize = 800;
+    const canvasSize = 500;
+    const encoder = new GIFEncoder(canvasSize, canvasSize);
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(canvasSize, canvasSize);
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
@@ -269,35 +251,36 @@ app.get('/bratvid', (req, res) => {
     encoder.start();
     encoder.setRepeat(0);
     encoder.setDelay(300);
-    encoder.setQuality(20);
+    encoder.setQuality(30);
 
     const words = text.split(' ');
-    let frames = words.length;
+    let fontSize = 120;
 
-    for (let i = 0; i <= frames; i++) {
-        ctx.fillStyle = '#FFFFFF'; // Latar belakang putih
+    if (words.length > 3) fontSize = 100;
+    if (words.length > 6) fontSize = 80;
+    if (words.length > 10) fontSize = 60;
+
+    for (let i = 0; i <= words.length; i++) {
+        ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        ctx.fillStyle = '#000000'; // Warna teks hitam
-        ctx.textAlign = 'center';
+        // Efek burik lebih ekstrem
+        ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
 
-        let fontSize = 150;
+        ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px ArialNarrow`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
 
-        let yOffset = canvasSize / 2; // Posisi teks awal di tengah
+        let y = 30;
+        let tempSize = fontSize;
 
-        // Efek teks sebelumnya mengecil ke atas
+        // Efek mengecil ke atas untuk teks sebelumnya
         for (let j = 0; j < i; j++) {
-            let sizeFactor = 1 - (i - j) * 0.1; // Mengecilkan teks lama
-            if (sizeFactor > 0) {
-                ctx.font = `bold ${fontSize * sizeFactor}px ArialNarrow`;
-                ctx.fillText(words[j], canvasSize / 2, yOffset - (i - j) * 50);
-            }
-        }
-
-        if (i < words.length) {
-            ctx.font = `bold ${fontSize}px ArialNarrow`;
-            ctx.fillText(words[i], canvasSize / 2, yOffset);
+            ctx.font = `bold ${tempSize}px ArialNarrow`;
+            ctx.fillText(words[j], 15, y);
+            y += tempSize + 5;
+            tempSize = Math.max(30, tempSize * 0.9); // Mengecilkan teks lama
         }
 
         encoder.addFrame(ctx);
