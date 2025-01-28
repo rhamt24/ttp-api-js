@@ -210,7 +210,7 @@ app.get('/brat', (req, res) => {
 
     // Teks hitam, besar, mulai dari kiri
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 70px ArialNarrow';
+    ctx.font = 'bold 150px ArialNarrow';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
@@ -259,7 +259,7 @@ app.get('/bratvid', (req, res) => {
         ctx.filter = "blur(1px) contrast(85%)";
 
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 70px ArialNarrow';
+        ctx.font = 'bold 150px ArialNarrow';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
