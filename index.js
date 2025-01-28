@@ -206,15 +206,14 @@ app.get('/brat', (req, res) => {
 
     ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
 
-    // Cek ukuran font yang pas agar muat di canvas
     let fontSize = 100;
     ctx.font = `bold ${fontSize}px Arial`;
-    
+
     let words = text.split(' ');
     let lines = [];
     let line = '';
-    
-    while (fontSize > 20) { 
+
+    while (fontSize > 20) {
         ctx.font = `bold ${fontSize}px Arial`;
         lines = [];
         line = '';
@@ -236,11 +235,14 @@ app.get('/brat', (req, res) => {
         let totalHeight = lines.length * (fontSize + 10);
         if (totalHeight <= canvasSize - 40) break;
 
-        fontSize -= 5; // Kurangi ukuran font jika teks tidak muat
+        fontSize -= 5;
     }
 
-    let y = 30;
+    // **Pastikan teks selalu berada di tengah canvas secara vertikal**
+    let startY = (canvasSize - (lines.length * (fontSize + 10))) / 2;
+
     ctx.fillStyle = '#000000';
+    let y = startY;
     lines.forEach((l) => {
         ctx.fillText(l, 15, y);
         y += fontSize + 10;
@@ -279,7 +281,7 @@ app.get('/bratvid', (req, res) => {
     let lines = [];
     let line = '';
 
-    while (fontSize > 20) { 
+    while (fontSize > 20) {
         ctx.font = `bold ${fontSize}px Arial`;
         lines = [];
         line = '';
@@ -301,7 +303,7 @@ app.get('/bratvid', (req, res) => {
         let totalHeight = lines.length * (fontSize + 10);
         if (totalHeight <= canvasSize - 40) break;
 
-        fontSize -= 5; 
+        fontSize -= 5;
     }
 
     let maxFrames = lines.length;
@@ -315,7 +317,8 @@ app.get('/bratvid', (req, res) => {
         ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px Arial`;
 
-        let y = 30;
+        let startY = (canvasSize - (lines.length * (fontSize + 10))) / 2;
+        let y = startY;
         let visibleLines = lines.slice(0, i + 1);
         
         visibleLines.forEach((l) => {
