@@ -198,8 +198,6 @@ app.get('/brat', (req, res) => {
     }
 
     const canvasSize = 500;
-    const padding = 20;
-    const lineHeight = 40;  // Jarak antar baris
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
@@ -210,53 +208,29 @@ app.get('/brat', (req, res) => {
     // Efek burik lebih ekstrem
     ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
-    // Ukuran font awal
+    // Menyesuaikan ukuran font berdasarkan panjang teks
     let fontSize = 140;
-    ctx.font = `bold ${fontSize}px ArialNarrow`;
+    const words = text.split(' ');
 
-    // Menyesuaikan ukuran font jika teks terlalu panjang
-    while (ctx.measureText(text).width > canvasSize - 2 * padding && fontSize > 10) {
-        fontSize -= 5;
-        ctx.font = `bold ${fontSize}px ArialNarrow`;
+    if (words.length > 3) {
+        fontSize = 120;
+    }
+    if (words.length > 6) {
+        fontSize = 100;
+    }
+    if (words.length > 10) {
+        fontSize = 80;
     }
 
-    // Fungsi untuk membagi teks menjadi 2 atau 3 kata per baris
-    function splitTextIntoLines(ctx, text, canvasWidth, padding) {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = '';
-
-        words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = ctx.measureText(testLine).width;
-
-            if (testWidth > canvasWidth - 2 * padding || currentLine.split(' ').length > 3) {
-                lines.push(currentLine);
-                currentLine = word;  // Mulai baris baru dengan kata ini
-            } else {
-                currentLine = testLine;  // Tambah kata ke baris yang ada
-            }
-        });
-
-        if (currentLine) {
-            lines.push(currentLine);  // Tambahkan baris terakhir
-        }
-
-        return lines;
-    }
-
-    // Pisahkan teks menjadi beberapa baris
-    const splitText = splitTextIntoLines(ctx, text, canvasSize, padding);
-
-    // Set posisi teks dimulai dari kiri atas
     ctx.fillStyle = '#000000';
+    ctx.font = `bold ${fontSize}px ArialNarrow`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    let y = padding;  // Mulai dari posisi padding atas
-    splitText.forEach((line) => {
-        ctx.fillText(line, padding, y);
-        y += fontSize + lineHeight;  // Sesuaikan jarak antar baris
+    let y = 20; // Mepet ke atas dengan sedikit space
+    words.forEach((word) => {
+        ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
+        y += fontSize + 10; // Jarak antar baris disesuaikan dengan ukuran font
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -273,85 +247,55 @@ app.get('/bratvid', (req, res) => {
     }
 
     const canvasSize = 500;
-    const padding = 20;
-    const lineHeight = 40;
-    const encoder = new GIFEncoder(canvasSize, canvasSize);
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
+    const encoder = new GIFEncoder(canvasSize, canvasSize);
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
 
     encoder.start();
     encoder.setRepeat(0);
-    encoder.setDelay(300); // Delay per frame
-    encoder.setQuality(30); // Kualitas GIF
+    encoder.setDelay(300);
+    encoder.setQuality(30);
 
-    // Pisahkan teks menjadi beberapa baris
     const words = text.split(' ');
-    const frames = [];
-    let currentText = '';
-    words.forEach((word, index) => {
-        currentText += word + ' ';
-        frames.push(currentText.trim());
-    });
+    let fontSize = 140;
 
-    // Fungsi untuk membagi teks menjadi 2 atau 3 kata per baris
-    function splitTextIntoLines(ctx, text, canvasWidth, padding) {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = '';
-
-        words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = ctx.measureText(testLine).width;
-
-            if (testWidth > canvasWidth - 2 * padding || currentLine.split(' ').length > 3) {
-                lines.push(currentLine);
-                currentLine = word;  // Mulai baris baru dengan kata ini
-            } else {
-                currentLine = testLine;  // Tambah kata ke baris yang ada
-            }
-        });
-
-        if (currentLine) {
-            lines.push(currentLine);  // Tambahkan baris terakhir
-        }
-
-        return lines;
+    if (words.length > 3) {
+        fontSize = 120;
+    }
+    if (words.length > 6) {
+        fontSize = 100;
+    }
+    if (words.length > 10) {
+        fontSize = 80;
     }
 
-    // Animasi teks bergerak ke bawah
-    frames.forEach((frameText, frameIndex) => {
-        ctx.fillStyle = '#FFFFFF';  // Background putih
+    let y = 20;
+
+    for (let i = 0; i <= words.length; i++) {
+        ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Ukuran font awal
-        let fontSize = 140;
-        ctx.font = `bold ${fontSize}px ArialNarrow`;
+        // Efek burik lebih ekstrem
+        ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
-        // Menyesuaikan ukuran font agar teks tidak keluar canvas
-        while (ctx.measureText(frameText).width > canvasSize - 2 * padding && fontSize > 10) {
-            fontSize -= 5;
-            ctx.font = `bold ${fontSize}px ArialNarrow`;
-        }
-
-        // Pisahkan teks menjadi beberapa baris
-        const splitText = splitTextIntoLines(ctx, frameText, canvasSize, padding);
-
-        // Set posisi teks bergerak ke bawah
         ctx.fillStyle = '#000000';
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
-        let y = padding + (frameIndex * lineHeight);  // Animasi bergerak ke bawah
-        splitText.forEach((line) => {
-            ctx.fillText(line, padding, y);
-            y += fontSize + lineHeight;  // Sesuaikan jarak antar baris
+        let tempY = y;
+        const currentText = words.slice(0, i).join('\n');
+
+        currentText.split('\n').forEach((line) => {
+            ctx.fillText(line, 15, tempY);
+            tempY += fontSize + 10;
         });
 
         encoder.addFrame(ctx);
-    });
+    }
 
     encoder.finish();
 });
