@@ -224,18 +224,46 @@ app.get('/brat', (req, res) => {
 
     ctx.fillStyle = '#000000';
     ctx.font = `bold ${fontSize}px ArialNarrow`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
+    ctx.textAlign = 'center'; // Pusatkan teks
+    ctx.textBaseline = 'middle'; // Pusatkan secara vertikal
 
-    let y = 20; // Mepet ke atas dengan sedikit space
-    words.forEach((word) => {
-        ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
-        y += fontSize + 10; // Jarak antar baris disesuaikan dengan ukuran font
+    // Split text dynamically for better fitting
+    const lines = splitTextDynamically(ctx, text, canvasSize, 20);
+    let y = (canvasSize - lines.length * fontSize) / 2; // Pusatkan teks vertikal
+
+    lines.forEach((line) => {
+        ctx.fillText(line, canvasSize / 2, y); // Pusatkan teks secara horizontal
+        y += fontSize + 10; // Jarak antar baris
     });
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
 });
+
+// Function to split text dynamically based on canvas width
+function splitTextDynamically(ctx, text, canvasWidth, padding) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+
+    words.forEach(word => {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const testWidth = ctx.measureText(testLine).width;
+
+        if (testWidth > canvasWidth - 2 * padding) {
+            lines.push(currentLine);
+            currentLine = word;
+        } else {
+            currentLine = testLine;
+        }
+    });
+
+    if (currentLine) {
+        lines.push(currentLine);
+    }
+
+    return lines;
+}
 
 /**
  * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
@@ -272,9 +300,12 @@ app.get('/bratvid', (req, res) => {
         fontSize = 80;
     }
 
+    // Pusatkan teks secara vertikal dan horizontal
     let y = 20;
 
-    for (let i = 0; i <= words.length; i++) {
+    const splitText = splitTextDynamically(ctx, text, canvasSize, 20);
+
+    for (let i = 0; i <= splitText.length; i++) {
         ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
@@ -283,14 +314,14 @@ app.get('/bratvid', (req, res) => {
 
         ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px ArialNarrow`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
         let tempY = y;
-        const currentText = words.slice(0, i).join('\n');
+        const currentText = splitText.slice(0, i).join('\n');
 
         currentText.split('\n').forEach((line) => {
-            ctx.fillText(line, 15, tempY);
+            ctx.fillText(line, canvasSize / 2, tempY);
             tempY += fontSize + 10;
         });
 
