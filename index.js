@@ -7,8 +7,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Register fonts
-registerFont(path.join(__dirname, 'fonts', 'Montserrat-BlackItalic.ttf'), { family: 'Montserrat' });
-registerFont(path.join(__dirname, 'fonts', 'arialnarrow.ttf'), { family: 'ArialNarrow' });
+const fontPath1 = path.join(__dirname, 'fonts', 'Montserrat-BlackItalic.ttf');
+const fontPath2 = path.join(__dirname, 'fonts', 'arialnarrow.ttf');
+
+console.log("Font Path 1:", fontPath1);
+console.log("Font Path 2:", fontPath2);
+
+registerFont(fontPath1, { family: 'Montserrat' });
+registerFont(fontPath2, { family: 'ArialNarrow' });
 
 /**
  * Static Text-to-Picture (TTP)
