@@ -30,7 +30,7 @@ app.get('/text-to-picture', (req, res) => {
     // Set text styling
     ctx.fillStyle = '#FFFFFF'; // Fill color for the text
     ctx.strokeStyle = '#000000'; // Outline color
-    ctx.lineWidth = 8; // Outline width
+    ctx.lineWidth = 15; // Outline width
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -189,7 +189,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 });
 
 /**
- * Static Text-to-Picture (brat)
+ * Static Text-to-Picture (brat) - 1:1 + Burik Effect
  */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
@@ -197,26 +197,31 @@ app.get('/brat', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasWidth = 800;
-    const canvasHeight = 400;
-    const canvas = createCanvas(canvasWidth, canvasHeight);
+    const canvasSize = 500;
+    const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // Background putih
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '40px ArialNarrow';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+    // Efek burik
+    ctx.filter = "blur(1px) contrast(90%)";
+
+    // Teks hitam dengan font agak kasar
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 50px ArialNarrow';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.fillText(text, canvasWidth / 2, canvasHeight / 2);
+    ctx.fillText(text, canvasSize / 2, canvasSize / 2);
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
 });
 
 /**
- * Animated Text-to-GIF (bratvid)
+ * Animated Text-to-GIF (bratvid) - 1:1 + Burik Effect + Efek Teks Muncul Satu per Satu
  */
 app.get('/bratvid', (req, res) => {
     const { text } = req.query;
@@ -224,33 +229,34 @@ app.get('/bratvid', (req, res) => {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasWidth = 800;
-    const canvasHeight = 400;
-    const canvas = createCanvas(canvasWidth, canvasHeight);
+    const canvasSize = 500;
+    const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(canvasWidth, canvasHeight);
+    const encoder = new GIFEncoder(canvasSize, canvasSize);
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
 
     encoder.start();
     encoder.setRepeat(0);
-    encoder.setDelay(500);
-    encoder.setQuality(10);
+    encoder.setDelay(100); // Kecepatan animasi
+    encoder.setQuality(30); // Kualitas lebih rendah agar burik
 
-    const lines = text.split(' ');
-    const yPosition = canvasHeight / 2;
+    // Animasi teks muncul satu per satu dari kiri ke kanan
+    for (let i = 0; i <= text.length; i++) {
+        ctx.fillStyle = '#FFFFFF'; // Background putih
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    for (let i = 1; i <= lines.length; i++) {
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '40px ArialNarrow';
-        ctx.textAlign = 'center';
+        // Efek burik
+        ctx.filter = "blur(1px) contrast(85%)";
+
+        ctx.fillStyle = '#000000'; // Teks hitam
+        ctx.font = 'bold 50px ArialNarrow';
+        ctx.textAlign = 'left'; // Mulai dari kiri
         ctx.textBaseline = 'middle';
 
-        const currentText = lines.slice(0, i).join(' ');
-        ctx.fillText(currentText, canvasWidth / 2, yPosition);
+        const partialText = text.substring(0, i); // Potong teks sesuai frame
+        ctx.fillText(partialText, 50, canvasSize / 2); // Mulai dari kiri dengan margin 50px
 
         encoder.addFrame(ctx);
     }
