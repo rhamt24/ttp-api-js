@@ -188,8 +188,16 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.finish();
 });
 
+        });
+
+        encoder.addFrame(ctx);
+    }
+
+    encoder.finish();
+});
+
 /**
- * Static Text-to-Picture (brat) - Teks Mulai dari Kiri
+ * Static Text-to-Picture (brat) - Teks Mulai dari Kiri & Lebih Rapi
  */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
@@ -205,21 +213,21 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik
-    ctx.filter = "blur(30px) contrast(90%)";
+    // Efek burik diperkuat
+    ctx.filter = "blur(40px) contrast(80%)";
 
     // Teks hitam, besar, mulai dari kiri
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 150px ArialNarrow';
+    ctx.font = 'bold 140px ArialNarrow';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
     const words = text.split(' ');
-    let y = 50;
-    
+    let y = 20; // Mepet ke atas dengan sedikit space
+
     words.forEach((word) => {
-        ctx.fillText(word, 20, y); // Mulai dari kiri (x = 20)
-        y += 150; // Jarak antar baris diperbesar
+        ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
+        y += 140; // Jarak antar baris diperbaiki agar lebih rapi
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -249,17 +257,17 @@ app.get('/bratvid', (req, res) => {
     encoder.setQuality(30);
 
     const words = text.split(' ');
-    let y = 50;
+    let y = 20; // Mepet ke atas dengan sedikit space
 
     for (let i = 0; i <= words.length; i++) {
         ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik
-        ctx.filter = "blur(30px) contrast(85%)";
+        // Efek burik lebih kuat
+        ctx.filter = "blur(40px) contrast(75%)";
 
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 150px ArialNarrow';
+        ctx.font = 'bold 140px ArialNarrow';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
@@ -267,8 +275,8 @@ app.get('/bratvid', (req, res) => {
         const currentText = words.slice(0, i).join('\n'); // Menampilkan per kata
 
         currentText.split('\n').forEach((line) => {
-            ctx.fillText(line, 20, tempY); // Mulai dari kiri (x = 20)
-            tempY += 150;
+            ctx.fillText(line, 15, tempY); // Mulai dari kiri (x = 15)
+            tempY += 140;
         });
 
         encoder.addFrame(ctx);
@@ -281,3 +289,4 @@ app.get('/bratvid', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
