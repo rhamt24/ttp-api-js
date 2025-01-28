@@ -220,7 +220,7 @@ app.get('/brat', (req, res) => {
         ctx.font = `bold ${fontSize}px ArialNarrow`;
     }
 
-    // Fungsi untuk membagi teks menjadi beberapa baris sesuai lebar canvas
+    // Fungsi untuk membagi teks menjadi 2 atau 3 kata per baris
     function splitTextIntoLines(ctx, text, canvasWidth, padding) {
         const words = text.split(' ');
         const lines = [];
@@ -230,7 +230,7 @@ app.get('/brat', (req, res) => {
             const testLine = currentLine ? `${currentLine} ${word}` : word;
             const testWidth = ctx.measureText(testLine).width;
 
-            if (testWidth > canvasWidth - 2 * padding) {
+            if (testWidth > canvasWidth - 2 * padding || currentLine.split(' ').length > 3) {
                 lines.push(currentLine);
                 currentLine = word;  // Mulai baris baru dengan kata ini
             } else {
@@ -284,8 +284,8 @@ app.get('/bratvid', (req, res) => {
 
     encoder.start();
     encoder.setRepeat(0);
-    encoder.setDelay(300);
-    encoder.setQuality(30);
+    encoder.setDelay(300); // Delay per frame
+    encoder.setQuality(30); // Kualitas GIF
 
     // Pisahkan teks menjadi beberapa baris
     const words = text.split(' ');
@@ -296,7 +296,33 @@ app.get('/bratvid', (req, res) => {
         frames.push(currentText.trim());
     });
 
-    frames.forEach((frameText) => {
+    // Fungsi untuk membagi teks menjadi 2 atau 3 kata per baris
+    function splitTextIntoLines(ctx, text, canvasWidth, padding) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = ctx.measureText(testLine).width;
+
+            if (testWidth > canvasWidth - 2 * padding || currentLine.split(' ').length > 3) {
+                lines.push(currentLine);
+                currentLine = word;  // Mulai baris baru dengan kata ini
+            } else {
+                currentLine = testLine;  // Tambah kata ke baris yang ada
+            }
+        });
+
+        if (currentLine) {
+            lines.push(currentLine);  // Tambahkan baris terakhir
+        }
+
+        return lines;
+    }
+
+    // Animasi teks bergerak ke bawah
+    frames.forEach((frameText, frameIndex) => {
         ctx.fillStyle = '#FFFFFF';  // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
@@ -310,40 +336,15 @@ app.get('/bratvid', (req, res) => {
             ctx.font = `bold ${fontSize}px ArialNarrow`;
         }
 
-        // Fungsi untuk membagi teks menjadi beberapa baris sesuai lebar canvas
-        function splitTextIntoLines(ctx, text, canvasWidth, padding) {
-            const words = text.split(' ');
-            const lines = [];
-            let currentLine = '';
-
-            words.forEach(word => {
-                const testLine = currentLine ? `${currentLine} ${word}` : word;
-                const testWidth = ctx.measureText(testLine).width;
-
-                if (testWidth > canvasWidth - 2 * padding) {
-                    lines.push(currentLine);
-                    currentLine = word;  // Mulai baris baru dengan kata ini
-                } else {
-                    currentLine = testLine;  // Tambah kata ke baris yang ada
-                }
-            });
-
-            if (currentLine) {
-                lines.push(currentLine);  // Tambahkan baris terakhir
-            }
-
-            return lines;
-        }
-
         // Pisahkan teks menjadi beberapa baris
         const splitText = splitTextIntoLines(ctx, frameText, canvasSize, padding);
 
-        // Set posisi teks dimulai dari kiri atas
+        // Set posisi teks bergerak ke bawah
         ctx.fillStyle = '#000000';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
-        let y = padding;  // Mulai dari posisi padding atas
+        let y = padding + (frameIndex * lineHeight);  // Animasi bergerak ke bawah
         splitText.forEach((line) => {
             ctx.fillText(line, padding, y);
             y += fontSize + lineHeight;  // Sesuaikan jarak antar baris
