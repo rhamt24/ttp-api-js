@@ -7,14 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Register fonts
-const fontPath1 = path.join(__dirname, 'fonts', 'Montserrat-BlackItalic.ttf');
-const fontPath2 = path.join(__dirname, 'fonts', 'arialnarrow.ttf');
-
-console.log("Font Path 1:", fontPath1);
-console.log("Font Path 2:", fontPath2);
-
-registerFont(fontPath1, { family: 'Montserrat' });
-registerFont(fontPath2, { family: 'ArialNarrow' });
+registerFont(path.join(__dirname, 'fonts', 'Montserrat-BlackItalic.ttf'), { family: 'Montserrat' });
+registerFont(path.join(__dirname, 'fonts', 'arialnarrow.ttf'), { family: 'ArialNarrow' });
 
 /**
  * Static Text-to-Picture (TTP)
@@ -195,7 +189,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 });
 
 /**
- * Static Text-to-Picture (brat) - Ukuran Font Menyesuaikan
+ * Static Text-to-Picture (brat) - Teks Otomatis Menyesuaikan Ukuran & Lebih Burik
  */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
@@ -211,23 +205,32 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik lebih kasar
+    // Efek burik lebih ekstrem
     ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
-    // Pecah teks per kata
-    let words = text.split(' ');
+    // Menyesuaikan ukuran font berdasarkan panjang teks
+    let fontSize = 140;
+    const words = text.split(' ');
 
-    // Hitung ukuran font berdasarkan jumlah kata
-    let fontSize = Math.max(50, 400 / words.length); // Minimal font size 50px agar tetap terbaca
-    ctx.font = `bold ${fontSize}px ArialNarrow`;
+    if (words.length > 3) {
+        fontSize = 120;
+    }
+    if (words.length > 6) {
+        fontSize = 100;
+    }
+    if (words.length > 10) {
+        fontSize = 80;
+    }
+
     ctx.fillStyle = '#000000';
+    ctx.font = `bold ${fontSize}px ArialNarrow`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    let y = 20; // Space atas biar nggak terlalu mepet
+    let y = 20; // Mepet ke atas dengan sedikit space
     words.forEach((word) => {
-        ctx.fillText(word, 15, y); // Mulai dari kiri
-        y += fontSize + 10; // Jarak antar baris fleksibel
+        ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
+        y += fontSize + 10; // Jarak antar baris disesuaikan dengan ukuran font
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -235,7 +238,7 @@ app.get('/brat', (req, res) => {
 });
 
 /**
- * Animated Text-to-GIF (bratvid) - Ukuran Font Menyesuaikan + Teks Tidak Terpotong
+ * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
  */
 app.get('/bratvid', (req, res) => {
     const { text } = req.query;
@@ -256,19 +259,30 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    let words = text.split(' ');
-    let fontSize = Math.max(50, 400 / words.length);
-    ctx.font = `bold ${fontSize}px ArialNarrow`;
+    const words = text.split(' ');
+    let fontSize = 140;
+
+    if (words.length > 3) {
+        fontSize = 120;
+    }
+    if (words.length > 6) {
+        fontSize = 100;
+    }
+    if (words.length > 10) {
+        fontSize = 80;
+    }
 
     let y = 20;
+
     for (let i = 0; i <= words.length; i++) {
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik lebih kasar
+        // Efek burik lebih ekstrem
         ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
         ctx.fillStyle = '#000000';
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
@@ -277,11 +291,16 @@ app.get('/bratvid', (req, res) => {
 
         currentText.split('\n').forEach((line) => {
             ctx.fillText(line, 15, tempY);
-            tempY += fontSize + 10; // Pastikan muat dalam canvas
+            tempY += fontSize + 10;
         });
 
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
