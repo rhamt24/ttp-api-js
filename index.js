@@ -188,14 +188,6 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.finish();
 });
 
-        });
-
-        encoder.addFrame(ctx);
-    }
-
-    encoder.finish();
-});
-
 /**
  * Static Text-to-Picture (brat) - Teks Mulai dari Kiri & Lebih Rapi
  */
