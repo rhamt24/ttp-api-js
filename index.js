@@ -204,9 +204,9 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
+    ctx.filter = "blur(50px) contrast(150%) brightness(110%)";
 
-    let fontSize = 100;
+    let fontSize = 120;
     ctx.font = `bold ${fontSize}px Arial`;
 
     let words = text.split(' ');
@@ -238,8 +238,9 @@ app.get('/brat', (req, res) => {
         fontSize -= 5;
     }
 
-    // **Pastikan teks selalu berada di tengah canvas secara vertikal**
-    let startY = (canvasSize - (lines.length * (fontSize + 10))) / 2;
+    // **Tambahkan margin atas agar teks tidak mepet ke atas**
+    let marginTop = 5;
+    let startY = marginTop;
 
     ctx.fillStyle = '#000000';
     let y = startY;
@@ -251,6 +252,7 @@ app.get('/brat', (req, res) => {
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
 });
+
 
 /**
  * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
@@ -274,7 +276,7 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    let fontSize = 100;
+    let fontSize = 120;
     ctx.font = `bold ${fontSize}px Arial`;
 
     let words = text.split(' ');
@@ -307,17 +309,18 @@ app.get('/bratvid', (req, res) => {
     }
 
     let maxFrames = lines.length;
+    let marginTop = 5; // **Agar teks pertama tidak mepet ke atas**
 
     for (let i = 0; i <= maxFrames; i++) {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
+        ctx.filter = "blur(50px) contrast(150%) brightness(110%)";
 
         ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px Arial`;
 
-        let startY = (canvasSize - (lines.length * (fontSize + 10))) / 2;
+        let startY = marginTop;
         let y = startY;
         let visibleLines = lines.slice(0, i + 1);
         
