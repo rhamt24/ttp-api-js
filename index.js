@@ -201,45 +201,49 @@ app.get('/brat', (req, res) => {
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // Latar belakang putih
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik
     ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
 
-    // Menentukan font
+    // Cek ukuran font yang pas agar muat di canvas
     let fontSize = 100;
-    ctx.fillStyle = '#000000';
     ctx.font = `bold ${fontSize}px Arial`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-
-    // Memisahkan teks menjadi beberapa baris sesuai lebar canvas
+    
     let words = text.split(' ');
     let lines = [];
     let line = '';
+    
+    while (fontSize > 20) { 
+        ctx.font = `bold ${fontSize}px Arial`;
+        lines = [];
+        line = '';
 
-    words.forEach((word) => {
-        let testLine = line + (line ? ' ' : '') + word;
-        let textWidth = ctx.measureText(testLine).width;
+        words.forEach((word) => {
+            let testLine = line + (line ? ' ' : '') + word;
+            let textWidth = ctx.measureText(testLine).width;
 
-        if (textWidth > canvasSize - 40) {
-            lines.push(line);
-            line = word;
-        } else {
-            line = testLine;
-        }
-    });
+            if (textWidth > canvasSize - 40) {
+                lines.push(line);
+                line = word;
+            } else {
+                line = testLine;
+            }
+        });
 
-    if (line) lines.push(line);
+        if (line) lines.push(line);
 
-    // Menulis teks ke canvas dengan wrap otomatis
+        let totalHeight = lines.length * (fontSize + 10);
+        if (totalHeight <= canvasSize - 40) break;
+
+        fontSize -= 5; // Kurangi ukuran font jika teks tidak muat
+    }
+
     let y = 30;
-    let lineHeight = fontSize + 10;
+    ctx.fillStyle = '#000000';
     lines.forEach((l) => {
         ctx.fillText(l, 15, y);
-        y += lineHeight;
+        y += fontSize + 10;
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -268,41 +272,48 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    // Pisahkan teks menjadi baris
+    let fontSize = 100;
+    ctx.font = `bold ${fontSize}px Arial`;
+
     let words = text.split(' ');
     let lines = [];
     let line = '';
-    let fontSize = 100;
 
-    ctx.font = `bold ${fontSize}px Arial`;
+    while (fontSize > 20) { 
+        ctx.font = `bold ${fontSize}px Arial`;
+        lines = [];
+        line = '';
 
-    words.forEach((word) => {
-        let testLine = line + (line ? ' ' : '') + word;
-        let textWidth = ctx.measureText(testLine).width;
+        words.forEach((word) => {
+            let testLine = line + (line ? ' ' : '') + word;
+            let textWidth = ctx.measureText(testLine).width;
 
-        if (textWidth > canvasSize - 40) {
-            lines.push(line);
-            line = word;
-        } else {
-            line = testLine;
-        }
-    });
+            if (textWidth > canvasSize - 40) {
+                lines.push(line);
+                line = word;
+            } else {
+                line = testLine;
+            }
+        });
 
-    if (line) lines.push(line);
+        if (line) lines.push(line);
+
+        let totalHeight = lines.length * (fontSize + 10);
+        if (totalHeight <= canvasSize - 40) break;
+
+        fontSize -= 5; 
+    }
 
     let maxFrames = lines.length;
 
     for (let i = 0; i <= maxFrames; i++) {
-        ctx.fillStyle = '#FFFFFF'; // Background putih
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik
         ctx.filter = "blur(3px) contrast(150%) brightness(110%)";
 
         ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px Arial`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
 
         let y = 30;
         let visibleLines = lines.slice(0, i + 1);
