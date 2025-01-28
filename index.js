@@ -283,6 +283,7 @@ app.get('/bratvid', (req, res) => {
     let lines = [];
     let line = '';
 
+    // Cari ukuran font yang sesuai
     while (fontSize > 20) {
         ctx.font = `bold ${fontSize}px Arial`;
         lines = [];
@@ -308,10 +309,16 @@ app.get('/bratvid', (req, res) => {
         fontSize -= 5;
     }
 
-    let maxFrames = lines.length;
-    let marginTop = 85; // **Agar teks pertama tidak mepet ke atas**
+    // Pisahkan semua kata dalam format animasi per kata
+    let allWords = [];
+    lines.forEach((line) => {
+        allWords.push(...line.split(' '));
+    });
 
-    for (let i = 0; i <= maxFrames; i++) {
+    let maxFrames = allWords.length;
+    let marginTop = 85; // Margin atas agar teks tidak mepet
+
+    for (let i = 0; i < maxFrames; i++) {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
@@ -320,14 +327,25 @@ app.get('/bratvid', (req, res) => {
         ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px Arial`;
 
-        let startY = marginTop;
-        let y = startY;
-        let visibleLines = lines.slice(0, i + 1);
-        
-        visibleLines.forEach((l) => {
-            ctx.fillText(l, 15, y);
-            y += fontSize + 10;
+        let y = marginTop;
+        let currentLine = '';
+        allWords.slice(0, i + 1).forEach((word) => {
+            let testLine = currentLine + (currentLine ? ' ' : '') + word;
+            let textWidth = ctx.measureText(testLine).width;
+
+            if (textWidth > canvasSize - 40) {
+                ctx.fillText(currentLine, 15, y);
+                currentLine = word;
+                y += fontSize + 10;
+            } else {
+                currentLine = testLine;
+            }
         });
+
+        // Render sisa teks pada currentLine
+        if (currentLine) {
+            ctx.fillText(currentLine, 15, y);
+        }
 
         encoder.addFrame(ctx);
     }
