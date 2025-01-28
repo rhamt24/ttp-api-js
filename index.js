@@ -189,7 +189,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 });
 
 /**
- * Static Text-to-Picture (brat) - Teks Otomatis Menyesuaikan Ukuran & Lebih Burik
+ * Static Text-to-Picture (brat) - Ukuran Font Menyesuaikan
  */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
@@ -205,32 +205,23 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik lebih ekstrem
+    // Efek burik lebih kasar
     ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
-    // Menyesuaikan ukuran font berdasarkan panjang teks
-    let fontSize = 140;
-    const words = text.split(' ');
+    // Pecah teks per kata
+    let words = text.split(' ');
 
-    if (words.length > 3) {
-        fontSize = 120;
-    }
-    if (words.length > 6) {
-        fontSize = 100;
-    }
-    if (words.length > 10) {
-        fontSize = 80;
-    }
-
-    ctx.fillStyle = '#000000';
+    // Hitung ukuran font berdasarkan jumlah kata
+    let fontSize = Math.max(50, 400 / words.length); // Minimal font size 50px agar tetap terbaca
     ctx.font = `bold ${fontSize}px ArialNarrow`;
+    ctx.fillStyle = '#000000';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    let y = 20; // Mepet ke atas dengan sedikit space
+    let y = 20; // Space atas biar nggak terlalu mepet
     words.forEach((word) => {
-        ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
-        y += fontSize + 10; // Jarak antar baris disesuaikan dengan ukuran font
+        ctx.fillText(word, 15, y); // Mulai dari kiri
+        y += fontSize + 10; // Jarak antar baris fleksibel
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -238,7 +229,7 @@ app.get('/brat', (req, res) => {
 });
 
 /**
- * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
+ * Animated Text-to-GIF (bratvid) - Ukuran Font Menyesuaikan + Teks Tidak Terpotong
  */
 app.get('/bratvid', (req, res) => {
     const { text } = req.query;
@@ -259,30 +250,19 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    const words = text.split(' ');
-    let fontSize = 140;
-
-    if (words.length > 3) {
-        fontSize = 120;
-    }
-    if (words.length > 6) {
-        fontSize = 100;
-    }
-    if (words.length > 10) {
-        fontSize = 80;
-    }
+    let words = text.split(' ');
+    let fontSize = Math.max(50, 400 / words.length);
+    ctx.font = `bold ${fontSize}px ArialNarrow`;
 
     let y = 20;
-
     for (let i = 0; i <= words.length; i++) {
-        ctx.fillStyle = '#FFFFFF'; // Background putih
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik lebih ekstrem
+        // Efek burik lebih kasar
         ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
         ctx.fillStyle = '#000000';
-        ctx.font = `bold ${fontSize}px ArialNarrow`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
@@ -291,16 +271,11 @@ app.get('/bratvid', (req, res) => {
 
         currentText.split('\n').forEach((line) => {
             ctx.fillText(line, 15, tempY);
-            tempY += fontSize + 10;
+            tempY += fontSize + 10; // Pastikan muat dalam canvas
         });
 
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
-});
-
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
 });
