@@ -189,7 +189,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 });
 
 /**
- * Static Text-to-Picture (brat) - 1:1 + Burik Effect
+ * Static Text-to-Picture (brat) - Teks Mulai dari Kiri
  */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
@@ -208,20 +208,26 @@ app.get('/brat', (req, res) => {
     // Efek burik
     ctx.filter = "blur(1px) contrast(90%)";
 
-    // Teks hitam dengan font agak kasar
+    // Teks hitam, besar, mulai dari kiri
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 50px ArialNarrow';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 70px ArialNarrow';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
 
-    ctx.fillText(text, canvasSize / 2, canvasSize / 2);
+    const words = text.split(' ');
+    let y = 50;
+    
+    words.forEach((word) => {
+        ctx.fillText(word, 20, y); // Mulai dari kiri (x = 20)
+        y += 80; // Jarak antar baris diperbesar
+    });
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
 });
 
 /**
- * Animated Text-to-GIF (bratvid) - 1:1 + Burik Effect + Efek Teks Muncul Satu per Satu
+ * Animated Text-to-GIF (bratvid) - Teks Mulai dari Kiri & Muncul Per Kata
  */
 app.get('/bratvid', (req, res) => {
     const { text } = req.query;
@@ -239,24 +245,31 @@ app.get('/bratvid', (req, res) => {
 
     encoder.start();
     encoder.setRepeat(0);
-    encoder.setDelay(100); // Kecepatan animasi
-    encoder.setQuality(30); // Kualitas lebih rendah agar burik
+    encoder.setDelay(300);
+    encoder.setQuality(30);
 
-    // Animasi teks muncul satu per satu dari kiri ke kanan
-    for (let i = 0; i <= text.length; i++) {
+    const words = text.split(' ');
+    let y = 50;
+
+    for (let i = 0; i <= words.length; i++) {
         ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
         // Efek burik
         ctx.filter = "blur(1px) contrast(85%)";
 
-        ctx.fillStyle = '#000000'; // Teks hitam
-        ctx.font = 'bold 50px ArialNarrow';
-        ctx.textAlign = 'left'; // Mulai dari kiri
-        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 70px ArialNarrow';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
 
-        const partialText = text.substring(0, i); // Potong teks sesuai frame
-        ctx.fillText(partialText, 50, canvasSize / 2); // Mulai dari kiri dengan margin 50px
+        let tempY = y;
+        const currentText = words.slice(0, i).join('\n'); // Menampilkan per kata
+
+        currentText.split('\n').forEach((line) => {
+            ctx.fillText(line, 20, tempY); // Mulai dari kiri (x = 20)
+            tempY += 80;
+        });
 
         encoder.addFrame(ctx);
     }
