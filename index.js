@@ -206,21 +206,24 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Inisialisasi font size
+    // Efek blur dan contrast
+    ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
+
+    // Ukuran font awal
     let fontSize = 140;
     ctx.font = `bold ${fontSize}px ArialNarrow`;
 
-    // Menyesuaikan ukuran font berdasarkan panjang teks
+    // Menyesuaikan ukuran font jika teks terlalu panjang
     while (ctx.measureText(text).width > canvasSize - 2 * padding && fontSize > 10) {
         fontSize -= 5;
         ctx.font = `bold ${fontSize}px ArialNarrow`;
     }
 
-    // Posisi teks
+    // Set posisi teks dimulai dari kiri atas
     ctx.fillStyle = '#000000';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, canvasSize / 2, canvasSize / 2);
+    ctx.textAlign = 'left';  // Menyusun teks dari kiri
+    ctx.textBaseline = 'top';  // Posisi teks mulai dari atas
+    ctx.fillText(text, padding, padding);  // Mulai dari kiri atas
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
@@ -257,7 +260,7 @@ app.get('/bratvid', (req, res) => {
         ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Inisialisasi font size
+        // Ukuran font awal
         let fontSize = 140;
         ctx.font = `bold ${fontSize}px ArialNarrow`;
 
@@ -267,10 +270,11 @@ app.get('/bratvid', (req, res) => {
             ctx.font = `bold ${fontSize}px ArialNarrow`;
         }
 
+        // Set posisi teks dimulai dari kiri atas
         ctx.fillStyle = '#000000';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(frameText, canvasSize / 2, canvasSize / 2);
+        ctx.textAlign = 'left';  // Menyusun teks dari kiri
+        ctx.textBaseline = 'top';  // Posisi teks mulai dari atas
+        ctx.fillText(frameText, padding, padding);  // Mulai dari kiri atas
 
         encoder.addFrame(ctx);
     });
