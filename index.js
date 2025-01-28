@@ -204,9 +204,9 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    ctx.filter = "blur(50px) contrast(150%) brightness(110%)";
+    ctx.filter = "blur(80px) contrast(150%) brightness(110%)";
 
-    let fontSize = 120;
+    let fontSize = 140;
     ctx.font = `bold ${fontSize}px Arial`;
 
     let words = text.split(' ');
@@ -276,7 +276,7 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    let fontSize = 120;
+    let fontSize = 140;
     ctx.font = `bold ${fontSize}px Arial`;
 
     let words = text.split(' ');
@@ -315,7 +315,7 @@ app.get('/bratvid', (req, res) => {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        ctx.filter = "blur(50px) contrast(150%) brightness(110%)";
+        ctx.filter = "blur(80px) contrast(150%) brightness(110%)";
 
         ctx.fillStyle = '#000000';
         ctx.font = `bold ${fontSize}px Arial`;
