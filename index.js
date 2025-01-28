@@ -189,7 +189,7 @@ app.get('/animated-text-to-picture', (req, res) => {
 });
 
 /**
- * Static Text-to-Picture (brat) - Teks Mulai dari Kiri & Lebih Rapi
+ * Static Text-to-Picture (brat) - Teks Otomatis Menyesuaikan Ukuran & Lebih Burik
  */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
@@ -205,21 +205,32 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik diperkuat
-    ctx.filter = "blur(40px) contrast(80%)";
+    // Efek burik lebih ekstrem
+    ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
-    // Teks hitam, besar, mulai dari kiri
+    // Menyesuaikan ukuran font berdasarkan panjang teks
+    let fontSize = 140;
+    const words = text.split(' ');
+
+    if (words.length > 3) {
+        fontSize = 120;
+    }
+    if (words.length > 6) {
+        fontSize = 100;
+    }
+    if (words.length > 10) {
+        fontSize = 80;
+    }
+
     ctx.fillStyle = '#000000';
-    ctx.font = 'bold 140px ArialNarrow';
+    ctx.font = `bold ${fontSize}px ArialNarrow`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
-    const words = text.split(' ');
     let y = 20; // Mepet ke atas dengan sedikit space
-
     words.forEach((word) => {
         ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
-        y += 140; // Jarak antar baris diperbaiki agar lebih rapi
+        y += fontSize + 10; // Jarak antar baris disesuaikan dengan ukuran font
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -227,7 +238,7 @@ app.get('/brat', (req, res) => {
 });
 
 /**
- * Animated Text-to-GIF (bratvid) - Teks Mulai dari Kiri & Muncul Per Kata
+ * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
  */
 app.get('/bratvid', (req, res) => {
     const { text } = req.query;
@@ -249,26 +260,38 @@ app.get('/bratvid', (req, res) => {
     encoder.setQuality(30);
 
     const words = text.split(' ');
-    let y = 20; // Mepet ke atas dengan sedikit space
+    let fontSize = 140;
+
+    if (words.length > 3) {
+        fontSize = 120;
+    }
+    if (words.length > 6) {
+        fontSize = 100;
+    }
+    if (words.length > 10) {
+        fontSize = 80;
+    }
+
+    let y = 20;
 
     for (let i = 0; i <= words.length; i++) {
         ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik lebih kuat
-        ctx.filter = "blur(40px) contrast(75%)";
+        // Efek burik lebih ekstrem
+        ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
 
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 140px ArialNarrow';
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
         let tempY = y;
-        const currentText = words.slice(0, i).join('\n'); // Menampilkan per kata
+        const currentText = words.slice(0, i).join('\n');
 
         currentText.split('\n').forEach((line) => {
-            ctx.fillText(line, 15, tempY); // Mulai dari kiri (x = 15)
-            tempY += 140;
+            ctx.fillText(line, 15, tempY);
+            tempY += fontSize + 10;
         });
 
         encoder.addFrame(ctx);
@@ -281,4 +304,3 @@ app.get('/bratvid', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
