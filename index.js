@@ -198,6 +198,7 @@ app.get('/brat', (req, res) => {
     }
 
     const canvasSize = 500;
+    const padding = 20;
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
@@ -205,33 +206,21 @@ app.get('/brat', (req, res) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-    // Efek burik lebih ekstrem
-    ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
+    // Inisialisasi font size
+    let fontSize = 140;
+    ctx.font = `bold ${fontSize}px ArialNarrow`;
 
     // Menyesuaikan ukuran font berdasarkan panjang teks
-    let fontSize = 140;
-    const words = text.split(' ');
-
-    if (words.length > 3) {
-        fontSize = 120;
-    }
-    if (words.length > 6) {
-        fontSize = 100;
-    }
-    if (words.length > 10) {
-        fontSize = 80;
+    while (ctx.measureText(text).width > canvasSize - 2 * padding && fontSize > 10) {
+        fontSize -= 5;
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
     }
 
+    // Posisi teks
     ctx.fillStyle = '#000000';
-    ctx.font = `bold ${fontSize}px ArialNarrow`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-
-    let y = 20; // Mepet ke atas dengan sedikit space
-    words.forEach((word) => {
-        ctx.fillText(word, 15, y); // Mulai dari kiri (x = 15)
-        y += fontSize + 10; // Jarak antar baris disesuaikan dengan ukuran font
-    });
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, canvasSize / 2, canvasSize / 2);
 
     res.setHeader('Content-Type', 'image/png');
     res.send(canvas.toBuffer());
@@ -247,9 +236,10 @@ app.get('/bratvid', (req, res) => {
     }
 
     const canvasSize = 500;
+    const padding = 20;
+    const encoder = new GIFEncoder(canvasSize, canvasSize);
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
-    const encoder = new GIFEncoder(canvasSize, canvasSize);
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
@@ -259,43 +249,31 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
+    // Split teks per frame
     const words = text.split(' ');
-    let fontSize = 140;
+    const frames = words.map((_, i) => words.slice(0, i + 1).join(' '));
 
-    if (words.length > 3) {
-        fontSize = 120;
-    }
-    if (words.length > 6) {
-        fontSize = 100;
-    }
-    if (words.length > 10) {
-        fontSize = 80;
-    }
-
-    let y = 20;
-
-    for (let i = 0; i <= words.length; i++) {
+    frames.forEach((frameText) => {
         ctx.fillStyle = '#FFFFFF'; // Background putih
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-        // Efek burik lebih ekstrem
-        ctx.filter = "blur(50px) contrast(60%) brightness(110%)";
+        // Inisialisasi font size
+        let fontSize = 140;
+        ctx.font = `bold ${fontSize}px ArialNarrow`;
+
+        // Menyesuaikan ukuran font agar teks tidak keluar canvas
+        while (ctx.measureText(frameText).width > canvasSize - 2 * padding && fontSize > 10) {
+            fontSize -= 5;
+            ctx.font = `bold ${fontSize}px ArialNarrow`;
+        }
 
         ctx.fillStyle = '#000000';
-        ctx.font = `bold ${fontSize}px ArialNarrow`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-
-        let tempY = y;
-        const currentText = words.slice(0, i).join('\n');
-
-        currentText.split('\n').forEach((line) => {
-            ctx.fillText(line, 15, tempY);
-            tempY += fontSize + 10;
-        });
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(frameText, canvasSize / 2, canvasSize / 2);
 
         encoder.addFrame(ctx);
-    }
+    });
 
     encoder.finish();
 });
