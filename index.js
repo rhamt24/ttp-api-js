@@ -206,7 +206,7 @@ app.get('/brat', (req, res) => {
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
     // Efek burik
-    ctx.filter = "blur(10px) contrast(90%)";
+    ctx.filter = "blur(30px) contrast(90%)";
 
     // Teks hitam, besar, mulai dari kiri
     ctx.fillStyle = '#000000';
@@ -219,7 +219,7 @@ app.get('/brat', (req, res) => {
     
     words.forEach((word) => {
         ctx.fillText(word, 20, y); // Mulai dari kiri (x = 20)
-        y += 120; // Jarak antar baris diperbesar
+        y += 150; // Jarak antar baris diperbesar
     });
 
     res.setHeader('Content-Type', 'image/png');
@@ -256,7 +256,7 @@ app.get('/bratvid', (req, res) => {
         ctx.fillRect(0, 0, canvasSize, canvasSize);
 
         // Efek burik
-        ctx.filter = "blur(10px) contrast(85%)";
+        ctx.filter = "blur(30px) contrast(85%)";
 
         ctx.fillStyle = '#000000';
         ctx.font = 'bold 150px ArialNarrow';
@@ -268,7 +268,7 @@ app.get('/bratvid', (req, res) => {
 
         currentText.split('\n').forEach((line) => {
             ctx.fillText(line, 20, tempY); // Mulai dari kiri (x = 20)
-            tempY += 120;
+            tempY += 150;
         });
 
         encoder.addFrame(ctx);
