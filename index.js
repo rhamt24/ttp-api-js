@@ -239,7 +239,7 @@ app.get('/brat', (req, res) => {
     }
 
     // **Tambahkan margin atas agar teks tidak mepet ke atas**
-    let marginTop = 100;
+    let marginTop = 90;
     let startY = marginTop;
 
     ctx.fillStyle = '#000000';
@@ -316,7 +316,7 @@ app.get('/bratvid', (req, res) => {
     });
 
     let maxFrames = allWords.length;
-    let marginTop = 100; // Margin atas agar teks tidak mepet
+    let marginTop = 90; // Margin atas agar teks tidak mepet
 
     for (let i = 0; i < maxFrames; i++) {
         ctx.fillStyle = '#FFFFFF';
