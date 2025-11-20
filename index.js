@@ -189,9 +189,9 @@ app.get('/brat', (req, res) => {
     }
 
     const outputCanvasSize = 500;
-    const lowResCanvasSize = 100;
+    const lowResCanvasSize = 200; // Ditingkatkan untuk mengurangi pixelation
     const margin = 5;
-    const initialFontSize = 30;
+    const initialFontSize = 40; // Disesuaikan dengan ukuran kanvas baru
     const fontFamily = 'Arial';
 
     const lowResCanvas = createCanvas(lowResCanvasSize, lowResCanvasSize);
@@ -211,16 +211,20 @@ app.get('/brat', (req, res) => {
     lowResCtx.font = `bold ${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
     lowResCtx.textAlign = 'left';
     lowResCtx.textBaseline = 'middle';
+    
+    lowResCtx.filter = "blur(1px)"; // Tambahkan blur ringan
 
     lines.forEach((l, index) => {
         const y = startY + index * lineHeight;
         lowResCtx.fillText(l, margin, y);
     });
+    
+    // Hapus filter sebelum di-upscale untuk outputCtx
 
     const outputCanvas = createCanvas(outputCanvasSize, outputCanvasSize);
     const outputCtx = outputCanvas.getContext('2d');
 
-    outputCtx.imageSmoothingEnabled = false;
+    outputCtx.imageSmoothingEnabled = false; // Tetap nonaktif agar tidak terlalu blur saat di-upscale
     outputCtx.drawImage(lowResCanvas, 0, 0, outputCanvasSize, outputCanvasSize);
     
     res.setHeader('Content-Type', 'image/png');
@@ -235,9 +239,9 @@ app.get('/bratvid', (req, res) => {
     }
 
     const outputCanvasSize = 500;
-    const lowResCanvasSize = 100;
+    const lowResCanvasSize = 200; // Ditingkatkan untuk mengurangi pixelation
     const margin = 5;
-    const initialFontSize = 30;
+    const initialFontSize = 40; // Disesuaikan dengan ukuran kanvas baru
     const fontFamily = 'Arial';
 
     const encoder = new GIFEncoder(outputCanvasSize, outputCanvasSize);
@@ -299,11 +303,15 @@ app.get('/bratvid', (req, res) => {
         lowResCtx.font = `bold ${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
         lowResCtx.textAlign = 'left';
         lowResCtx.textBaseline = 'middle';
+        
+        lowResCtx.filter = "blur(1px)"; // Tambahkan blur ringan
 
         linesToRender.forEach((l, index) => {
             const y_pos = startY + index * lineHeight;
             lowResCtx.fillText(l, margin, y_pos);
         });
+        
+        // Hapus filter sebelum di-upscale untuk outputCtx
 
         outputCtx.fillStyle = '#FFFFFF';
         outputCtx.fillRect(0, 0, outputCanvasSize, outputCanvasSize);
