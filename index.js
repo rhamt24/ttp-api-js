@@ -6,26 +6,18 @@ const GIFEncoder = require('gifencoder');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Register fonts
-// Pastikan font ini tersedia di folder 'fonts' Anda.
-// Jika Anda ingin dukungan emoji yang lebih universal, pastikan font di sistem server
-// Anda dapat menanganinya, atau gunakan font yang mendukung Unicode penuh (misalnya, Noto Color Emoji, jika diinstal).
-// Untuk tujuan ini, kita akan mengandalkan 'Arial' sebagai fallback umum.
 registerFont(path.join(__dirname, 'fonts', 'Montserrat-BlackItalic.ttf'), { family: 'Montserrat' });
 registerFont(path.join(__dirname, 'fonts', 'arialnarrow.ttf'), { family: 'ArialNarrow' });
+registerFont(path.join(__dirname, 'fonts', 'NotoColorEmoji.ttf'), { family: 'Noto Color Emoji' });
 
-// --- UTILITY FUNCTION FOR TEXT SPLITTING AND SIZING ---
-
-// Fungsi utilitas untuk membagi teks menjadi baris yang pas di kanvas
-// dan menyesuaikan ukuran font secara dinamis.
-function fitTextToCanvas(ctx, text, canvasSize, margin, initialFontSize, lineHeightFactor) {
+function fitTextToCanvasAdvanced(ctx, text, canvasWidth, padding, initialFontSize, fontFamily) {
     let fontSize = initialFontSize;
     let lines = [];
-    let lineSpacing = 10; // Spasi tambahan antar baris
+    const minFontSize = 10;
+    const lineHeightFactor = 1.2;
 
-    // Proses teks untuk mendapatkan baris yang sesuai
-    function getLines(currentFontSize) {
-        ctx.font = `bold ${currentFontSize}px Arial`;
+    function getLinesForSize(currentFontSize) {
+        ctx.font = `${currentFontSize}px "${fontFamily}", "Noto Color Emoji"`; 
         const words = text.split(' ');
         let currentLines = [];
         let currentLine = '';
@@ -34,9 +26,8 @@ function fitTextToCanvas(ctx, text, canvasSize, margin, initialFontSize, lineHei
             let testLine = currentLine + (currentLine ? ' ' : '') + word;
             let textWidth = ctx.measureText(testLine).width;
 
-            if (textWidth > canvasSize - 2 * margin) {
-                // Baris terlalu panjang, pindahkan ke baris baru
-                if (currentLine) { // Pastikan currentLine tidak kosong
+            if (textWidth > canvasWidth - (2 * padding)) {
+                if (currentLine) {
                     currentLines.push(currentLine);
                 }
                 currentLine = word;
@@ -44,137 +35,78 @@ function fitTextToCanvas(ctx, text, canvasSize, margin, initialFontSize, lineHei
                 currentLine = testLine;
             }
         });
-
         if (currentLine) currentLines.push(currentLine);
-
         return currentLines;
     }
 
-    // Loop untuk mengecilkan font sampai teks muat
-    while (fontSize > 10) {
-        lines = getLines(fontSize);
+    while (fontSize > minFontSize) {
+        lines = getLinesForSize(fontSize);
+        const totalHeight = lines.length * (fontSize * lineHeightFactor);
 
-        // Hitung tinggi total yang dibutuhkan
-        const lineMetrics = fontSize * lineHeightFactor; // Tinggi baris adalah faktor dari fontSize
-        const totalHeight = lines.length * lineMetrics + (lines.length - 1) * lineSpacing;
-
-        // Cek apakah tinggi dan lebar sudah pas
-        if (totalHeight <= canvasSize - 2 * margin) {
-            break; // Teks sudah muat
+        let maxWidthExceeded = false;
+        for (const line of lines) {
+            if (ctx.measureText(line).width > canvasWidth - (2 * padding)) {
+                maxWidthExceeded = true;
+                break;
+            }
         }
 
-        fontSize -= 2; // Kurangi ukuran font
-        if (fontSize <= 10) {
-            // Jika font terlalu kecil, gunakan font terkecil yang masih memungkinkan
-            lines = getLines(10);
-            fontSize = 10;
+        if (!maxWidthExceeded && totalHeight <= canvasWidth - (2 * padding)) {
             break;
         }
+        fontSize--;
     }
 
     return { lines, fontSize };
 }
 
-// --- END OF UTILITY FUNCTION ---
-
-
-/**
- * Static Text-to-Picture (TTP) - Dipertahankan seperti aslinya
- */
 app.get('/text-to-picture', (req, res) => {
-    // ... (Logika TTP statis Anda dipertahankan, karena bukan fokus perbaikan 'Brat') ...
     const { text, format = 'png' } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
 
     const canvasSize = 800;
-    const padding = 20;
-    const lineHeight = 100;
+    const padding = 40;
+    const fontFamily = 'Montserrat';
+    const initialFontSize = 100;
+
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Set text styling
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 15;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    let fontSize = 300;
-    ctx.font = `${fontSize}px "Montserrat"`;
-
-    // Function to split text dynamically based on canvas width
-    function splitTextDynamically(ctx, text, canvasWidth, padding) {
-        const words = text.split(' ');
-        const lines = [];
-        let currentLine = '';
-
-        words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = ctx.measureText(testLine).width;
-
-            if (testWidth > canvasWidth - 2 * padding) {
-                lines.push(currentLine);
-                currentLine = word;
-            } else {
-                currentLine = testLine;
-            }
-        });
-
-        if (currentLine) {
-            lines.push(currentLine);
-        }
-
-        return lines;
-    }
-
-    // Adjust font size if the text is too wide
-    let splitText = splitTextDynamically(ctx, text, canvasSize, padding);
-    let totalHeight = splitText.length * lineHeight;
-
-    while (totalHeight > canvasSize - 2 * padding && fontSize > 10) {
-        fontSize--;
-        ctx.font = `${fontSize}px "Montserrat"`;
-        splitText = splitTextDynamically(ctx, text, canvasSize, padding);
-        totalHeight = splitText.length * lineHeight;
-    }
+    const { lines, fontSize } = fitTextToCanvasAdvanced(ctx, text, canvasSize, padding, initialFontSize, fontFamily);
     
-    // Ulangi penyesuaian font setelah split
-    while (ctx.measureText(splitText[0] || '').width > canvasSize - 2 * padding && fontSize > 10) {
-        fontSize--;
-        ctx.font = `${fontSize}px "Montserrat"`;
-        splitText = splitTextDynamically(ctx, text, canvasSize, padding);
-    }
-    
-    // Hitung ulang totalHeight dan startY
-    totalHeight = splitText.length * (fontSize + 10);
-    const startY = (canvasSize - totalHeight) / 2 + (fontSize + 10) / 2;
+    ctx.font = `${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
 
-    // Apply rotation for slanted text
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = lines.length * lineHeight;
+    
+    const startY = (canvasSize - totalTextHeight) / 2 + (lineHeight / 2);
+
     const angle = -0.2;
-    ctx.save(); // Simpan kondisi kanvas sebelum rotasi
+    ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(angle);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-    // Draw each line with outline and fill
-    splitText.forEach((line, index) => {
-        // Ganti 'lineHeight' dengan perhitungan yang lebih dinamis
-        const y = (canvasSize / 2) + (index - (splitText.length - 1) / 2) * (fontSize + 10);
+    lines.forEach((line, index) => {
+        const y = startY + index * lineHeight;
 
-        // Draw outline (stroke) first
         ctx.strokeText(line, canvas.width / 2, y);
 
-        // Draw text fill
         ctx.fillText(line, canvas.width / 2, y);
     });
-    
-    ctx.restore(); // Kembalikan kondisi kanvas
 
-    // Output the image
+    ctx.restore();
+
     if (format === 'jpg' || format === 'jpeg') {
         const buffer = canvas.toBuffer('image/jpeg');
         res.set('Content-Type', 'image/jpeg');
@@ -186,10 +118,6 @@ app.get('/text-to-picture', (req, res) => {
     }
 });
 
-/**
- * Animated Text-to-Picture (ATTP)
- * Disesuaikan untuk menggunakan fungsi utilitas fitTextToCanvas
- */
 app.get('/animated-text-to-picture', (req, res) => {
     const { text } = req.query;
     if (!text) {
@@ -197,9 +125,9 @@ app.get('/animated-text-to-picture', (req, res) => {
     }
 
     const canvasSize = 500;
-    const margin = 50; // Padding yang digunakan untuk perhitungan
-    const lineHeightFactor = 1.2; // Faktor tinggi baris relatif terhadap ukuran font
+    const padding = 50;
     const initialFontSize = 100;
+    const fontFamily = 'Montserrat';
 
     const encoder = new GIFEncoder(canvasSize, canvasSize);
 
@@ -207,41 +135,36 @@ app.get('/animated-text-to-picture', (req, res) => {
     encoder.createReadStream().pipe(res);
 
     encoder.start();
-    encoder.setRepeat(0); // Loop the GIF
-    encoder.setDelay(100); // Delay per frame
-    encoder.setQuality(20); // Quality of the GIF
+    encoder.setRepeat(0);
+    encoder.setDelay(100);
+    encoder.setQuality(20);
 
     const canvas = createCanvas(canvasSize, canvasSize);
     const ctx = canvas.getContext('2d');
 
-    // **Gunakan fungsi utilitas untuk mendapatkan ukuran font dan baris yang pas**
-    const { lines: textLines, fontSize } = fitTextToCanvas(ctx, text, canvasSize, margin, initialFontSize, lineHeightFactor);
+    const { lines: textLines, fontSize } = fitTextToCanvasAdvanced(ctx, text, canvasSize, padding, initialFontSize, fontFamily);
     
-    // Perhitungan metrik berdasarkan hasil penyesuaian
-    const lineMetrics = fontSize * lineHeightFactor;
-    const lineSpacing = 10;
-    const totalHeight = textLines.length * lineMetrics + (textLines.length - 1) * lineSpacing;
-    const startY = (canvasSize - totalHeight) / 2 + lineMetrics / 2;
-
+    const lineHeight = fontSize * 1.2;
+    const totalHeight = textLines.length * lineHeight;
+    const startY = (canvasSize - totalHeight) / 2 + (lineHeight / 2);
 
     const colors = ['#a7a7e7', '#a7c7e7', '#a7e7e7'];
     const totalFrames = 30;
     const bounceHeight = 50;
 
-    function drawText(ctx, color, yOffset, textLines, fontSize, startY, lineMetrics, lineSpacing) {
+    function drawText(ctx, color, yOffset, linesToDraw, currentFontSize, currentStartY, currentLineHeight) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = color;
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 15; // Disesuaikan sedikit lebih tipis dari 25 untuk ukuran 500x500
+        ctx.lineWidth = 15;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        ctx.font = `${fontSize}px "Montserrat"`;
+        ctx.font = `${currentFontSize}px "${fontFamily}", "Noto Color Emoji"`;
 
-        textLines.forEach((line, index) => {
-            // Hitung posisi Y baru
-            const y = startY + index * (lineMetrics + lineSpacing) + yOffset;
+        linesToDraw.forEach((line, index) => {
+            const y = currentStartY + index * currentLineHeight + yOffset;
             ctx.strokeText(line, canvas.width / 2, y);
             ctx.fillText(line, canvas.width / 2, y);
         });
@@ -249,83 +172,80 @@ app.get('/animated-text-to-picture', (req, res) => {
 
     for (let i = 0; i < totalFrames; i++) {
         const progress = i / totalFrames;
-        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight * 0.5; // Mengurangi ketinggian pantulan
+        const bounce = Math.sin(progress * Math.PI * 2) * bounceHeight * 0.5;
         const color = colors[Math.floor(i / 3) % colors.length];
 
-        drawText(ctx, color, bounce, textLines, fontSize, startY, lineMetrics, lineSpacing);
+        drawText(ctx, color, bounce, textLines, fontSize, startY, lineHeight);
         encoder.addFrame(ctx);
     }
 
     encoder.finish();
 });
 
-/**
- * Static Text-to-Picture (brat) - Teks Otomatis Menyesuaikan Ukuran & Lebih Burik
- * **TELAH DIPERBAIKI**
- */
 app.get('/brat', (req, res) => {
     const { text } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasSize = 500;
-    const margin = 20; // Margin baru
-    const initialFontSize = 140;
-    const lineHeightFactor = 1.1; // Faktor tinggi baris untuk Arial
+    const outputCanvasSize = 500;
+    const lowResCanvasSize = 100;
+    const margin = 5;
+    const initialFontSize = 30;
+    const fontFamily = 'Arial';
 
-    const canvas = createCanvas(canvasSize, canvasSize);
-    const ctx = canvas.getContext('2d');
+    const lowResCanvas = createCanvas(lowResCanvasSize, lowResCanvasSize);
+    const lowResCtx = lowResCanvas.getContext('2d');
 
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    lowResCtx.fillStyle = '#FFFFFF';
+    lowResCtx.fillRect(0, 0, lowResCanvasSize, lowResCanvasSize);
 
-    // Dapatkan baris dan ukuran font yang sudah disesuaikan
-    const { lines, fontSize } = fitTextToCanvas(ctx, text, canvasSize, margin, initialFontSize, lineHeightFactor);
+    const { lines, fontSize } = fitTextToCanvasAdvanced(lowResCtx, text, lowResCanvasSize, margin, initialFontSize, fontFamily);
     
-    // Perhitungan metrik berdasarkan hasil penyesuaian
-    const lineMetrics = fontSize * lineHeightFactor;
-    const lineSpacing = 10;
-    const totalHeight = lines.length * lineMetrics + (lines.length - 1) * lineSpacing;
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = lines.length * lineHeight;
     
-    // Hitung posisi Y awal agar teks berada di tengah vertikal
-    let startY = (canvasSize - totalHeight) / 2 + lineMetrics * 0.8; // Penyesuaian ke tengah
+    const startY = (lowResCanvasSize - totalTextHeight) / 2 + (lineHeight / 2);
 
-    // Aplikasikan filter
-    ctx.filter = "blur(80px) contrast(150%) brightness(110%)";
-
-    ctx.fillStyle = '#000000';
-    ctx.font = `bold ${fontSize}px Arial`;
+    lowResCtx.fillStyle = '#000000';
+    lowResCtx.font = `bold ${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
+    lowResCtx.textAlign = 'left';
+    lowResCtx.textBaseline = 'middle';
 
     lines.forEach((l, index) => {
-        // Posisi X tetap 15 (margin kiri)
-        const y = startY + index * (lineMetrics + lineSpacing);
-        ctx.fillText(l, 15, y);
+        const y = startY + index * lineHeight;
+        lowResCtx.fillText(l, margin, y);
     });
 
+    const outputCanvas = createCanvas(outputCanvasSize, outputCanvasSize);
+    const outputCtx = outputCanvas.getContext('2d');
+
+    outputCtx.imageSmoothingEnabled = false;
+    outputCtx.drawImage(lowResCanvas, 0, 0, outputCanvasSize, outputCanvasSize);
+    
     res.setHeader('Content-Type', 'image/png');
-    res.send(canvas.toBuffer());
+    res.send(outputCanvas.toBuffer());
 });
 
 
-/**
- * Animated Text-to-GIF (bratvid) - Teks Otomatis Menyesuaikan Ukuran & Burik
- * **TELAH DIPERBAIKI**
- */
 app.get('/bratvid', (req, res) => {
     const { text } = req.query;
     if (!text) {
         return res.status(400).json({ error: 'Text is required' });
     }
 
-    const canvasSize = 500;
-    const margin = 20;
-    const initialFontSize = 140;
-    const lineHeightFactor = 1.1;
+    const outputCanvasSize = 500;
+    const lowResCanvasSize = 100;
+    const margin = 5;
+    const initialFontSize = 30;
+    const fontFamily = 'Arial';
 
-    const encoder = new GIFEncoder(canvasSize, canvasSize);
-    const canvas = createCanvas(canvasSize, canvasSize);
-    const ctx = canvas.getContext('2d');
+    const encoder = new GIFEncoder(outputCanvasSize, outputCanvasSize);
+    const lowResCanvas = createCanvas(lowResCanvasSize, lowResCanvasSize);
+    const lowResCtx = lowResCanvas.getContext('2d');
+    
+    const outputCanvas = createCanvas(outputCanvasSize, outputCanvasSize);
+    const outputCtx = outputCanvas.getContext('2d');
 
     res.setHeader('Content-Type', 'image/gif');
     encoder.createReadStream().pipe(res);
@@ -335,30 +255,25 @@ app.get('/bratvid', (req, res) => {
     encoder.setDelay(300);
     encoder.setQuality(30);
 
-    // **Gunakan fungsi utilitas untuk mendapatkan ukuran font dan baris yang pas**
-    const { lines: staticLines, fontSize } = fitTextToCanvas(ctx, text, canvasSize, margin, initialFontSize, lineHeightFactor);
+    const { lines: staticLines, fontSize } = fitTextToCanvasAdvanced(lowResCtx, text, lowResCanvasSize, margin, initialFontSize, fontFamily);
     
-    // Perhitungan metrik berdasarkan hasil penyesuaian
-    const lineMetrics = fontSize * lineHeightFactor;
-    const lineSpacing = 10;
-    const totalHeight = staticLines.length * lineMetrics + (staticLines.length - 1) * lineSpacing;
-    const startY = (canvasSize - totalHeight) / 2 + lineMetrics * 0.8;
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = staticLines.length * lineHeight;
+    const startY = (lowResCanvasSize - totalTextHeight) / 2 + (lineHeight / 2);
 
-    // Pisahkan semua kata dalam format animasi per kata
     let allWords = text.split(' ');
     let maxFrames = allWords.length;
 
-    // Fungsi untuk memecah array kata menjadi baris berdasarkan lebar
-    function splitWordsToLines(wordsToRender, currentFontSize, canvasSize, margin, ctx) {
-        ctx.font = `bold ${currentFontSize}px Arial`;
+    function splitWordsToLines(wordsToRender, currentFontSize, canvasWidth, currentMargin, ctxInstance) {
+        ctxInstance.font = `bold ${currentFontSize}px "${fontFamily}", "Noto Color Emoji"`;
         let lines = [];
         let currentLine = '';
 
         wordsToRender.forEach((word) => {
             let testLine = currentLine + (currentLine ? ' ' : '') + word;
-            let textWidth = ctx.measureText(testLine).width;
+            let textWidth = ctxInstance.measureText(testLine).width;
 
-            if (textWidth > canvasSize - 2 * margin) {
+            if (textWidth > canvasWidth - (2 * currentMargin)) {
                 if (currentLine) {
                     lines.push(currentLine);
                 }
@@ -367,41 +282,40 @@ app.get('/bratvid', (req, res) => {
                 currentLine = testLine;
             }
         });
-
         if (currentLine) lines.push(currentLine);
         return lines;
     }
 
 
     for (let i = 0; i < maxFrames; i++) {
-        // Dapatkan hanya kata-kata yang akan di-render di frame ini
         const wordsToRender = allWords.slice(0, i + 1);
         
-        // Pecah kata-kata ini menjadi baris
-        const linesToRender = splitWordsToLines(wordsToRender, fontSize, canvasSize, margin, ctx);
+        const linesToRender = splitWordsToLines(wordsToRender, fontSize, lowResCanvasSize, margin, lowResCtx);
         
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        lowResCtx.fillStyle = '#FFFFFF';
+        lowResCtx.fillRect(0, 0, lowResCanvasSize, lowResCanvasSize);
 
-        ctx.filter = "blur(80px) contrast(150%) brightness(110%)";
+        lowResCtx.fillStyle = '#000000';
+        lowResCtx.font = `bold ${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
+        lowResCtx.textAlign = 'left';
+        lowResCtx.textBaseline = 'middle';
 
-        ctx.fillStyle = '#000000';
-        ctx.font = `bold ${fontSize}px Arial`;
-
-        let y = startY;
-        
         linesToRender.forEach((l, index) => {
-            const y_pos = startY + index * (lineMetrics + lineSpacing);
-            ctx.fillText(l, 15, y_pos);
+            const y_pos = startY + index * lineHeight;
+            lowResCtx.fillText(l, margin, y_pos);
         });
 
-        encoder.addFrame(ctx);
+        outputCtx.fillStyle = '#FFFFFF';
+        outputCtx.fillRect(0, 0, outputCanvasSize, outputCanvasSize);
+        outputCtx.imageSmoothingEnabled = false;
+        outputCtx.drawImage(lowResCanvas, 0, 0, outputCanvasSize, outputCanvasSize);
+
+        encoder.addFrame(outputCtx);
     }
 
     encoder.finish();
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
