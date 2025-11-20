@@ -17,7 +17,8 @@ function fitTextToCanvasAdvanced(ctx, text, canvasWidth, padding, initialFontSiz
     const lineHeightFactor = 1.2;
 
     function getLinesForSize(currentFontSize) {
-        ctx.font = `${currentFontSize}px "${fontFamily}", "Noto Color Emoji"`; 
+        // Font Stack yang Diperbaiki: Tambahkan 'sans-serif'
+        ctx.font = `${currentFontSize}px "${fontFamily}", sans-serif, "Noto Color Emoji"`; 
         const words = text.split(' ');
         let currentLines = [];
         let currentLine = '';
@@ -84,7 +85,7 @@ app.get('/text-to-picture', (req, res) => {
 
     const { lines, fontSize } = fitTextToCanvasAdvanced(ctx, text, canvasSize, padding, initialFontSize, fontFamily);
     
-    ctx.font = `${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
+    ctx.font = `${fontSize}px "${fontFamily}", sans-serif, "Noto Color Emoji"`;
 
     const lineHeight = fontSize * 1.2;
     const totalTextHeight = lines.length * lineHeight;
@@ -161,7 +162,7 @@ app.get('/animated-text-to-picture', (req, res) => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        ctx.font = `${currentFontSize}px "${fontFamily}", "Noto Color Emoji"`;
+        ctx.font = `${currentFontSize}px "${fontFamily}", sans-serif, "Noto Color Emoji"`;
 
         linesToDraw.forEach((line, index) => {
             const y = currentStartY + index * currentLineHeight + yOffset;
@@ -189,9 +190,9 @@ app.get('/brat', (req, res) => {
     }
 
     const outputCanvasSize = 500;
-    const lowResCanvasSize = 200; // Ditingkatkan untuk mengurangi pixelation
+    const lowResCanvasSize = 200;
     const margin = 5;
-    const initialFontSize = 40; // Disesuaikan dengan ukuran kanvas baru
+    const initialFontSize = 40;
     const fontFamily = 'Arial';
 
     const lowResCanvas = createCanvas(lowResCanvasSize, lowResCanvasSize);
@@ -208,23 +209,22 @@ app.get('/brat', (req, res) => {
     const startY = (lowResCanvasSize - totalTextHeight) / 2 + (lineHeight / 2);
 
     lowResCtx.fillStyle = '#000000';
-    lowResCtx.font = `bold ${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
+    lowResCtx.font = `bold ${fontSize}px "${fontFamily}", sans-serif, "Noto Color Emoji"`;
     lowResCtx.textAlign = 'left';
     lowResCtx.textBaseline = 'middle';
     
-    lowResCtx.filter = "blur(1px)"; // Tambahkan blur ringan
+    lowResCtx.filter = "blur(1px)";
 
     lines.forEach((l, index) => {
         const y = startY + index * lineHeight;
         lowResCtx.fillText(l, margin, y);
     });
     
-    // Hapus filter sebelum di-upscale untuk outputCtx
 
     const outputCanvas = createCanvas(outputCanvasSize, outputCanvasSize);
     const outputCtx = outputCanvas.getContext('2d');
 
-    outputCtx.imageSmoothingEnabled = false; // Tetap nonaktif agar tidak terlalu blur saat di-upscale
+    outputCtx.imageSmoothingEnabled = false;
     outputCtx.drawImage(lowResCanvas, 0, 0, outputCanvasSize, outputCanvasSize);
     
     res.setHeader('Content-Type', 'image/png');
@@ -239,9 +239,9 @@ app.get('/bratvid', (req, res) => {
     }
 
     const outputCanvasSize = 500;
-    const lowResCanvasSize = 200; // Ditingkatkan untuk mengurangi pixelation
+    const lowResCanvasSize = 200;
     const margin = 5;
-    const initialFontSize = 40; // Disesuaikan dengan ukuran kanvas baru
+    const initialFontSize = 40;
     const fontFamily = 'Arial';
 
     const encoder = new GIFEncoder(outputCanvasSize, outputCanvasSize);
@@ -269,7 +269,7 @@ app.get('/bratvid', (req, res) => {
     let maxFrames = allWords.length;
 
     function splitWordsToLines(wordsToRender, currentFontSize, canvasWidth, currentMargin, ctxInstance) {
-        ctxInstance.font = `bold ${currentFontSize}px "${fontFamily}", "Noto Color Emoji"`;
+        ctxInstance.font = `bold ${currentFontSize}px "${fontFamily}", sans-serif, "Noto Color Emoji"`;
         let lines = [];
         let currentLine = '';
 
@@ -300,18 +300,17 @@ app.get('/bratvid', (req, res) => {
         lowResCtx.fillRect(0, 0, lowResCanvasSize, lowResCanvasSize);
 
         lowResCtx.fillStyle = '#000000';
-        lowResCtx.font = `bold ${fontSize}px "${fontFamily}", "Noto Color Emoji"`;
+        lowResCtx.font = `bold ${fontSize}px "${fontFamily}", sans-serif, "Noto Color Emoji"`;
         lowResCtx.textAlign = 'left';
         lowResCtx.textBaseline = 'middle';
         
-        lowResCtx.filter = "blur(1px)"; // Tambahkan blur ringan
+        lowResCtx.filter = "blur(1px)";
 
         linesToRender.forEach((l, index) => {
             const y_pos = startY + index * lineHeight;
             lowResCtx.fillText(l, margin, y_pos);
         });
         
-        // Hapus filter sebelum di-upscale untuk outputCtx
 
         outputCtx.fillStyle = '#FFFFFF';
         outputCtx.fillRect(0, 0, outputCanvasSize, outputCanvasSize);
